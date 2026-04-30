@@ -186,6 +186,11 @@
             { id: 'fun', title: 'Having Fun', icon: 'gamepad-2', color: 'from-pink-400 to-rose-500', done: false }
         ];
 
+        // Factory to guarantee deep copies and completely independent lists
+        function getFreshTasks() {
+            return JSON.parse(JSON.stringify(defaultTasks));
+        }
+
         // --- GLOBAL STATE MANAGEMENT (Sibling Mode) ---
         let appState = null;
         let tasks = [];
@@ -198,36 +203,44 @@
             if (savedState) {
                 appState = JSON.parse(savedState);
                 
-                // Add Team Mission to existing saves if it doesn't exist
+                // Ensure Team Mission exists with completely independent tasks
                 if (!appState.profiles['team_mission']) {
+                    const currentProfileTasks = appState.profiles[appState.activeProfileId] ? 
+                        JSON.parse(JSON.stringify(appState.profiles[appState.activeProfileId].tasks)) : getFreshTasks();
+                    
                     appState.profiles['team_mission'] = {
                         name: 'Team Mission 🤝',
-                        tasks: JSON.parse(JSON.stringify(appState.profiles[appState.activeProfileId].tasks)),
+                        tasks: currentProfileTasks,
                         bestTime: null,
-                        unlockedGames: []
+                        unlockedGames: [],
+                        missionStartTime: null
                     };
                     saveState();
                 }
+
+                // Remove legacy default profile if they still have it
+                if (appState.profiles['default_p1'] && appState.profiles['default_p1'].name === 'Astronaut 1') {
+                    delete appState.profiles['default_p1'];
+                    if (appState.activeProfileId === 'default_p1') {
+                        appState.activeProfileId = 'team_mission';
+                    }
+                    saveState();
+                }
             } else {
-                // Migrate old data seamlessly so they don't lose anything
+                // Migrate old data seamlessly
                 const oldTasks = localStorage.getItem('bedtime_missions');
                 const oldBest = localStorage.getItem('best_mission_time');
                 const oldUnlocked = localStorage.getItem('unlocked_games_collection');
 
                 appState = {
-                    activeProfileId: 'team_mission', // Start on team mission by default
+                    activeProfileId: 'team_mission', 
                     profiles: {
                         'team_mission': {
                             name: 'Team Mission 🤝',
-                            tasks: oldTasks ? JSON.parse(oldTasks) : [...defaultTasks],
+                            tasks: oldTasks ? JSON.parse(oldTasks) : getFreshTasks(),
                             bestTime: oldBest ? parseInt(oldBest) : null,
-                            unlockedGames: oldUnlocked ? JSON.parse(oldUnlocked) : []
-                        },
-                        'default_p1': {
-                            name: 'Astronaut 1',
-                            tasks: oldTasks ? JSON.parse(oldTasks) : [...defaultTasks],
-                            bestTime: null,
-                            unlockedGames: []
+                            unlockedGames: oldUnlocked ? JSON.parse(oldUnlocked) : [],
+                            missionStartTime: null
                         }
                     }
                 };
@@ -241,6 +254,12 @@
             tasks = p.tasks;
             bestMissionTime = p.bestTime;
             unlockedGames = p.unlockedGames;
+            
+            // Patch old saves that didn't have this field
+            if (typeof p.missionStartTime === 'undefined') {
+                p.missionStartTime = null;
+                saveState();
+            }
         }
 
         function saveState() {
@@ -259,7 +278,6 @@
         ];
 
         let isEditMode = false;
-        let sessionStartTimes = {}; // Tracks live timer for each sibling independently
         let danceInterval = null;
         let isPlayingBeat = false;
 
@@ -277,16 +295,12 @@
         }
 
         function triggerHaptic() {
-            // Vibrate phone for 40ms if supported (mostly Android)
-            if (navigator.vibrate) {
-                navigator.vibrate(40);
-            }
+            if (navigator.vibrate) navigator.vibrate(40);
         }
 
         function playTaskSound(doneCount, totalCount) {
             initAudio();
             triggerHaptic();
-            // Adding a 50ms buffer time ensures the browser catches the very first sound
             const time = audioCtx.currentTime + 0.05; 
             
             const progress = doneCount / totalCount;
@@ -373,7 +387,6 @@
 
             danceInterval = setInterval(() => {
                 const time = audioCtx.currentTime + 0.05;
-                
                 const seqLength = 128; 
                 const currentStep = step % seqLength;
                 const section = Math.floor(currentStep / 32); 
@@ -392,7 +405,7 @@
                     kick.start(time); kick.stop(time + 0.3);
                 }
 
-                // Snare / Clap
+                // Snare
                 let playSnare = false;
                 if (section >= 1 && (barStep === 4 || barStep === 12)) playSnare = true;
                 if (section === 1 && currentStep >= 56) playSnare = (currentStep % 2 === 0); 
@@ -468,11 +481,8 @@
         }
 
         function stopDanceBeat() {
-            if (isPlayingBeat) {
-                toggleDanceBeat();
-            }
+            if (isPlayingBeat) toggleDanceBeat();
         }
-        // -----------------------------
 
         // --- CUSTOM MODAL UI HELPER ---
         function showModal({ title, message, isPrompt, defaultValue, confirmText, onConfirm }) {
@@ -543,12 +553,10 @@
                 } ${isEditMode && isActive ? 'shake-anim border-pink-400' : ''}`;
                 
                 btn.onclick = () => switchProfile(id);
-                // Added a small edit pencil icon to the active tab to show it can be clicked to rename
                 btn.innerHTML = `<i data-lucide="user" class="w-4 h-4"></i> ${profile.name} ${isActive ? '<i data-lucide="edit-2" class="w-3 h-3 ml-1 text-indigo-200"></i>' : ''}`;
                 container.appendChild(btn);
             });
 
-            // Add Sibling Button
             const addBtn = document.createElement('button');
             addBtn.className = "px-4 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm flex items-center gap-2 bg-pink-500/10 text-pink-400 border-2 border-pink-500/30 hover:bg-pink-500/30 flex-shrink-0 border-dashed";
             addBtn.onclick = addSibling;
@@ -559,7 +567,6 @@
         }
 
         function switchProfile(id) {
-            // Clicking the already active astronaut lets you quickly rename them!
             if (id === appState.activeProfileId) {
                 showModal({
                     title: "Rename Astronaut",
@@ -576,37 +583,18 @@
                 });
                 return;
             }
-            
-            // Switch profiles without interrupting any live missions!
             performSwitch(id);
         }
 
         function performSwitch(id) {
             appState.activeProfileId = id;
             bindCurrentProfile();
-            saveState();
+            saveState(); // Saves the active profile choice immediately
             
             renderProfiles();
             renderTasks();
-            updateProgress();
-            
-            // Update timer UI
-            if (bestMissionTime) {
-                document.getElementById('best-time-container').classList.remove('hidden');
-                document.getElementById('best-time-display').innerText = formatTime(parseInt(bestMissionTime));
-            } else {
-                document.getElementById('best-time-container').classList.add('hidden');
-            }
-            
-            // Restore live timer UI for this sibling if they have one running
-            if (sessionStartTimes[id]) {
-                const elapsed = Math.floor((Date.now() - sessionStartTimes[id]) / 1000);
-                document.getElementById('current-time-display').innerText = formatTime(elapsed);
-                document.getElementById('mission-timer').classList.remove('opacity-0');
-            } else {
-                document.getElementById('current-time-display').innerText = "00:00";
-                document.getElementById('mission-timer').classList.add('opacity-0');
-            }
+            updateProgress(false); // Update UI bar without triggering completion popups
+            syncTimerUI();
         }
 
         function addSibling() {
@@ -621,15 +609,15 @@
                     const newId = 'profile_' + Date.now();
                     appState.profiles[newId] = {
                         name: name.trim(),
-                        // Smart copy: Give them the exact same tasks as the current profile to save parents time!
+                        // Deep copy guarantees they don't share checkboxes!
                         tasks: JSON.parse(JSON.stringify(appState.profiles[appState.activeProfileId].tasks)),
                         bestTime: null,
-                        unlockedGames: []
+                        unlockedGames: [],
+                        missionStartTime: null
                     };
                     
-                    // Reset their tasks so they are un-checked
+                    // Uncheck everything for the new sibling
                     appState.profiles[newId].tasks.forEach(t => t.done = false);
-                    
                     saveState();
                     switchProfile(newId);
                 }
@@ -644,22 +632,43 @@
         }
 
         function startTimer() {
-            const id = appState.activeProfileId;
-            if (!sessionStartTimes[id]) {
-                sessionStartTimes[id] = Date.now();
-                document.getElementById('mission-timer').classList.remove('opacity-0');
-                
-                // Show best time if we have one
-                if (bestMissionTime) {
-                    document.getElementById('best-time-container').classList.remove('hidden');
-                    document.getElementById('best-time-display').innerText = formatTime(parseInt(bestMissionTime));
-                }
+            const p = appState.profiles[appState.activeProfileId];
+            if (!p.missionStartTime) {
+                p.missionStartTime = Date.now(); // Stamp time on their specific profile
+                saveState();
+                syncTimerUI();
             }
         }
 
         function stopTimer() {
-            // Removes the active timer for the current sibling
-            delete sessionStartTimes[appState.activeProfileId];
+            const p = appState.profiles[appState.activeProfileId];
+            if (p) {
+                p.missionStartTime = null;
+                saveState();
+            }
+            syncTimerUI();
+        }
+
+        function syncTimerUI() {
+            const p = appState.profiles[appState.activeProfileId];
+            const timerEl = document.getElementById('mission-timer');
+            const currentEl = document.getElementById('current-time-display');
+            
+            if (p && p.missionStartTime) {
+                const elapsed = Math.floor((Date.now() - p.missionStartTime) / 1000);
+                currentEl.innerText = formatTime(elapsed);
+                timerEl.classList.remove('opacity-0');
+            } else {
+                currentEl.innerText = "00:00";
+                timerEl.classList.add('opacity-0');
+            }
+            
+            if (bestMissionTime) {
+                document.getElementById('best-time-container').classList.remove('hidden');
+                document.getElementById('best-time-display').innerText = formatTime(parseInt(bestMissionTime));
+            } else {
+                document.getElementById('best-time-container').classList.add('hidden');
+            }
         }
 
         function toggleEditMode() {
@@ -671,10 +680,10 @@
                 document.getElementById('edit-toggle-btn').classList.replace('text-indigo-400', 'text-pink-400');
             } else {
                 document.getElementById('edit-toggle-btn').classList.replace('text-pink-400', 'text-indigo-400');
-                saveState(); // Save any changes made during edit mode
+                saveState(); // Lock in settings
             }
             
-            renderProfiles(); // Update tabs to show rename pencil
+            renderProfiles();
             renderTasks();
         }
 
@@ -686,10 +695,10 @@
                 confirmText: "Remove",
                 onConfirm: () => {
                     tasks = tasks.filter(t => t.id !== id);
-                    appState.profiles[appState.activeProfileId].tasks = tasks; // sync reference
+                    appState.profiles[appState.activeProfileId].tasks = tasks; 
                     saveState();
                     renderTasks();
-                    updateProgress();
+                    updateProgress(false);
                 }
             });
         }
@@ -718,7 +727,7 @@
                         });
                         saveState();
                         renderTasks();
-                        updateProgress();
+                        updateProgress(false);
                     }
                 }
             });
@@ -797,10 +806,11 @@
             if (!task) return;
 
             task.done = !task.done;
+            saveState(); // Instantly save progress to storage!
 
             const doneCount = tasks.filter(t => t.done).length;
 
-            if (doneCount === 1 && !sessionStartTimes[appState.activeProfileId]) {
+            if (doneCount === 1 && !appState.profiles[appState.activeProfileId].missionStartTime) {
                 startTimer();
             }
 
@@ -816,17 +826,13 @@
                 });
             }
 
-            if (doneCount === 0) {
-                stopTimer();
-                document.getElementById('mission-timer').classList.add('opacity-0');
-                document.getElementById('current-time-display').innerText = "00:00";
-            }
+            if (doneCount === 0) stopTimer();
 
             renderTasks();
-            updateProgress();
+            updateProgress(true); // check for finale
         }
 
-        function updateProgress() {
+        function updateProgress(checkFinale = true) {
             const doneCount = tasks.filter(t => t.done).length;
             const totalCount = tasks.length;
             
@@ -838,14 +844,13 @@
             progressFill.style.width = percentage > 5 ? `${percentage}%` : '40px';
             progressText.innerText = `${doneCount} / ${totalCount} Missions Complete`;
 
-            if (totalCount > 0 && doneCount === totalCount) {
+            if (checkFinale && totalCount > 0 && doneCount === totalCount) {
                 stopTimer();
                 setTimeout(triggerSuccess, 800);
             }
         }
 
         function setRewardUI(rewardObj) {
-            // Check Collection status
             if (!unlockedGames.includes(rewardObj.title)) {
                 unlockedGames.push(rewardObj.title);
                 saveState();
@@ -856,7 +861,7 @@
             document.getElementById('collection-tracker').innerText = `You've collected ${unlockedGames.length} of ${parentRewards.length} mini-games!`;
 
             const musicContainer = document.getElementById('music-container');
-            stopDanceBeat(); // Safety stop
+            stopDanceBeat();
             musicContainer.innerHTML = ''; 
             musicContainer.classList.add('hidden');
 
@@ -873,11 +878,9 @@
         }
 
         function respinReward() {
-            // Pick a new random reward
             const randomReward = parentRewards[Math.floor(Math.random() * parentRewards.length)];
             setRewardUI(randomReward);
             
-            // Little visual flair for the respin
             const box = document.getElementById('reward-text').parentElement.parentElement;
             box.classList.add('scale-95', 'opacity-50');
             setTimeout(() => {
@@ -889,21 +892,20 @@
             const modal = document.getElementById('success-message');
             const modalInner = document.getElementById('success-modal');
             
-            // Check Best Time Logic
-            const currentStart = sessionStartTimes[appState.activeProfileId];
+            const p = appState.profiles[appState.activeProfileId];
+            const currentStart = p.missionStartTime;
             const elapsed = currentStart ? Math.floor((Date.now() - currentStart) / 1000) : 0;
             let timeMsg = `Time: ${formatTime(elapsed)}`;
             
             if (!bestMissionTime || elapsed < parseInt(bestMissionTime)) {
                 bestMissionTime = elapsed;
-                appState.profiles[appState.activeProfileId].bestTime = elapsed; // Explicit update
+                p.bestTime = elapsed; 
                 saveState();
                 timeMsg += ` — 🌟 NEW RECORD! 🌟`;
             }
             
             document.getElementById('final-time').innerText = timeMsg;
 
-            // Pick initial reward
             const randomReward = parentRewards[Math.floor(Math.random() * parentRewards.length)];
             setRewardUI(randomReward);
             
@@ -929,18 +931,17 @@
 
             setTimeout(() => {
                 modal.classList.add('hidden');
+                
+                // Reset just THIS sibling's missions and save
                 tasks.forEach(t => t.done = false);
+                saveState();
                 
                 stopTimer();
-                document.getElementById('mission-timer').classList.add('opacity-0');
-                document.getElementById('current-time-display').innerText = "00:00";
-                
                 renderTasks();
-                updateProgress();
+                updateProgress(false);
             }, 400);
         }
 
-        // Big, continuous confetti explosion for completing everything
         function fireBigConfetti() {
             var duration = 4 * 1000;
             var animationEnd = Date.now() + duration;
@@ -952,10 +953,7 @@
 
             var interval = setInterval(function() {
                 var timeLeft = animationEnd - Date.now();
-
-                if (timeLeft <= 0) {
-                    return clearInterval(interval);
-                }
+                if (timeLeft <= 0) return clearInterval(interval);
 
                 var particleCount = 50 * (timeLeft / duration);
                 confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
@@ -963,29 +961,23 @@
             }, 250);
         }
 
-        // Initialize on load
         window.onload = () => {
             loadState();
             lucide.createIcons();
-            
-            // Show best time if we have one on load
-            if (bestMissionTime) {
-                document.getElementById('best-time-container').classList.remove('hidden');
-                document.getElementById('best-time-display').innerText = formatTime(parseInt(bestMissionTime));
-            }
+            syncTimerUI();
 
-            // Master clock loop for all active astronaut timers
+            // Master clock ticks for whichever profile is currently active
             setInterval(() => {
-                const currentStart = sessionStartTimes[appState.activeProfileId];
-                if (currentStart) {
-                    const elapsed = Math.floor((Date.now() - currentStart) / 1000);
+                const p = appState.profiles[appState.activeProfileId];
+                if (p && p.missionStartTime) {
+                    const elapsed = Math.floor((Date.now() - p.missionStartTime) / 1000);
                     document.getElementById('current-time-display').innerText = formatTime(elapsed);
                 }
             }, 1000);
             
             renderProfiles();
             renderTasks();
-            updateProgress();
+            updateProgress(false);
         };
     </script>
 </body>
