@@ -4,36 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bedtime Mission App</title>
-    <!-- Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons for graphics -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Canvas Confetti for fun completion effect -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <style>
-        /* Smooth scrolling */
         html { scroll-behavior: smooth; }
-        
-        /* Animations */
-        @keyframes bounce-pop {
-            0% { transform: scale(0.90); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
+        @keyframes bounce-pop { 0% { transform: scale(0.90); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
         .task-done-anim { animation: bounce-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         .shake-anim { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake {
-            10%, 90% { transform: translate3d(-1px, 0, 0); }
-            20%, 80% { transform: translate3d(2px, 0, 0); }
-            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-            40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-        @keyframes rocket-fly {
-            0%, 100% { transform: translate(0, 0) rotate(135deg); }
-            50% { transform: translate(6px, 6px) rotate(135deg); }
-        }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        @keyframes rocket-fly { 0%, 100% { transform: translate(0, 0) rotate(135deg); } 50% { transform: translate(6px, 6px) rotate(135deg); } }
         .animate-rocket-fly { animation: rocket-fly 1.5s ease-in-out infinite; }
-        
         .custom-scrollbar::-webkit-scrollbar { height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.5); border-radius: 10px; }
@@ -41,14 +22,12 @@
 </head>
 <body class="bg-gradient-to-b from-indigo-900 via-purple-900 to-slate-900 min-h-screen text-white font-sans antialiased overflow-x-hidden flex flex-col selection:bg-pink-500 selection:text-white">
 
-    <!-- Header -->
     <header class="pt-12 pb-4 px-4 text-center z-10 relative">
         <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-indigo-300 drop-shadow-lg mb-2">
             Bedtime Mission! 🚀
         </h1>
         <p class="text-indigo-200 text-lg font-medium max-w-xl mx-auto">Finish your missions to unlock a Parent Game!</p>
         
-        <!-- Timer Display -->
         <div id="mission-timer" class="inline-block mt-4 px-6 py-2 rounded-full bg-slate-800/50 border border-indigo-500/30 text-indigo-300 font-mono text-2xl opacity-0 transition-opacity duration-500 shadow-inner mb-2">
             <span id="current-time-display">00:00</span>
             <span id="best-time-container" class="hidden text-pink-400 ml-3 border-l border-indigo-500/30 pl-3">
@@ -57,23 +36,16 @@
         </div>
     </header>
 
-    <!-- Mode Toggle & Profile Bar -->
     <div class="max-w-4xl mx-auto w-full px-4 mb-4 z-10 relative">
         <div class="flex flex-col sm:flex-row items-center gap-4 mb-4">
-            <!-- Mode Toggle -->
             <div class="flex bg-slate-800/80 p-1 rounded-full border border-indigo-500/20 shrink-0">
-                <button onclick="setGameMode('team')" id="mode-team" class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all">Team Mode</button>
-                <button onclick="setGameMode('competition')" id="mode-competition" class="px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all">Competition</button>
+                <button onclick="setGameMode('team')" id="mode-team" class="px-5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all">Together</button>
+                <button onclick="setGameMode('competition')" id="mode-competition" class="px-5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all">Competition</button>
             </div>
-            
-            <!-- Profile Tabs (Visible only in Competition Mode) -->
-            <div id="profile-selector" class="flex gap-3 overflow-x-auto pb-2 custom-scrollbar px-2 w-full">
-                <!-- Tabs injected here -->
-            </div>
+            <div id="profile-selector" class="flex gap-3 overflow-x-auto pb-2 custom-scrollbar px-2 w-full"></div>
         </div>
     </div>
 
-    <!-- Progress Bar -->
     <div class="max-w-3xl mx-auto w-full px-6 mb-8 z-10 relative">
         <div class="bg-slate-800/80 rounded-full h-10 border-4 border-indigo-400/30 overflow-hidden relative shadow-2xl backdrop-blur-sm">
             <div id="progress-fill" class="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 h-full w-[40px] transition-all duration-700 ease-out flex items-center justify-end pr-2 shadow-[0_0_20px_rgba(236,72,153,0.8)]">
@@ -83,33 +55,28 @@
         <p id="progress-text" class="text-center mt-3 text-indigo-200 font-bold text-2xl drop-shadow-md">0 / 6 Complete</p>
     </div>
 
-    <!-- Task List -->
     <main id="task-list" class="max-w-4xl mx-auto w-full px-4 pb-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-grow z-10 relative">
-        <!-- Generated Tasks -->
     </main>
 
-    <!-- Footer -->
     <div class="mt-auto py-8 flex justify-center z-10 relative">
         <button onclick="toggleEditMode()" id="edit-toggle-btn" class="text-indigo-400 hover:text-white text-sm flex items-center gap-2 transition-colors bg-slate-800/50 px-6 py-3 rounded-full border border-indigo-500/20 shadow-lg">
             <i data-lucide="palette" class="w-4 h-4"></i> <span>Make it your own</span>
         </button>
     </div>
 
-    <!-- Standby / Waiting Modal -->
     <div id="waiting-message" class="hidden fixed inset-0 z-40 flex items-center justify-center bg-slate-900/90 backdrop-blur-md">
         <div class="bg-white rounded-3xl p-8 max-w-sm w-full mx-4 text-center shadow-2xl relative animate-in fade-in zoom-in duration-300">
-            <button onclick="document.getElementById('waiting-message').classList.add('hidden')" class="absolute top-4 right-4 text-slate-300 hover:text-slate-500 transition-colors">
+            <button onclick="document.getElementById('waiting-message').classList.add('hidden')" class="absolute top-4 right-4 text-slate-300 hover:text-slate-500">
                 <i data-lucide="x-circle" class="w-8 h-8"></i>
             </button>
             <div class="bg-indigo-100 text-indigo-600 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
                 <i data-lucide="clock" class="w-10 h-10"></i>
             </div>
             <h2 class="text-3xl font-black text-indigo-900 mb-2">Almost there!</h2>
-            <p class="text-slate-600 font-bold mb-0 leading-relaxed">You're done! Now help and cheer on <span id="waiting-for-names" class="text-indigo-600 font-black">the rest of your crew</span> so you can all play!</p>
+            <p class="text-slate-600 font-bold mb-0">You're done! Now help and cheer on <span id="waiting-for-names" class="text-indigo-600">the crew</span> so you can all play!</p>
         </div>
     </div>
 
-    <!-- Success Modal -->
     <div id="success-message" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur-md">
         <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full mx-4 text-center shadow-2xl h-[90vh] sm:h-auto overflow-y-auto" id="success-modal">
             <div class="relative w-28 h-28 mx-auto mb-6">
@@ -118,18 +85,12 @@
                     <i data-lucide="rocket" class="w-12 h-12 text-pink-400 animate-rocket-fly"></i>
                 </div>
             </div>
-
             <h2 id="success-title" class="text-3xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-indigo-600 uppercase tracking-wide">Mission Complete!</h2>
-            
             <div id="final-times-container" class="w-full flex flex-col gap-2 mb-6"></div>
-
-            <!-- Reward Area -->
-            <div class="bg-indigo-50 border-4 border-indigo-100 rounded-2xl p-6 relative mt-4 shadow-sm">
-                <div class="bg-yellow-400 text-yellow-900 text-xs font-black uppercase tracking-widest py-1.5 px-4 rounded-full absolute -top-4 left-1/2 -translate-x-1/2 shadow-sm border border-yellow-300 whitespace-nowrap">
-                    Parent Game Unlocked!
-                </div>
+            <div class="bg-indigo-50 border-4 border-indigo-100 rounded-2xl p-6 relative mt-4 shadow-sm text-center">
+                <div class="bg-yellow-400 text-yellow-900 text-xs font-black uppercase tracking-widest py-1.5 px-4 rounded-full absolute -top-4 left-1/2 -translate-x-1/2 shadow-sm border border-yellow-300 whitespace-nowrap">Parent Game Unlocked!</div>
                 <p id="reward-text" class="text-2xl font-black text-indigo-900 mt-2 mb-2 leading-tight"></p>
-                <div class="bg-white/80 p-3 rounded-xl text-sm font-medium text-indigo-800 text-center">
+                <div class="bg-white/80 p-3 rounded-xl text-sm font-medium text-indigo-800">
                     <p id="reward-description"></p>
                 </div>
                 <div id="music-container" class="mt-4 hidden text-center"></div>
@@ -137,19 +98,17 @@
                     <i data-lucide="refresh-cw" class="w-3 h-3"></i> Try a different game
                 </button>
             </div>
-            
             <button onclick="resetMissions()" class="mt-8 bg-indigo-600 hover:bg-indigo-500 text-white font-black py-4 px-8 rounded-full shadow-lg w-full text-xl uppercase tracking-wider flex items-center justify-center gap-3">
                 <i data-lucide="rocket" class="w-6 h-6"></i> Reset for Tomorrow
             </button>
         </div>
     </div>
 
-    <!-- Common Modal -->
     <div id="custom-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm">
         <div class="bg-white rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl transform transition-all scale-100" id="custom-modal-inner">
             <h3 id="custom-modal-title" class="text-2xl font-black text-indigo-900 mb-2">Title</h3>
             <p id="custom-modal-message" class="text-indigo-800 font-medium mb-4 hidden"></p>
-            <input type="text" id="custom-modal-input" class="hidden w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 mb-4 text-slate-800 font-bold" placeholder="...">
+            <input type="text" id="custom-modal-input" class="hidden w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 mb-4 text-slate-800 font-bold">
             <div class="flex justify-between gap-3 mt-4">
                 <button id="custom-modal-delete" class="hidden px-4 py-2.5 rounded-full bg-red-100 text-red-600 font-bold hover:bg-red-200">Delete</button>
                 <div class="flex gap-2 ml-auto">
@@ -180,7 +139,6 @@
         ];
 
         let appState = null;
-        let tasks = [];
         let isEditMode = false;
         let isPlayingBeat = false;
         let danceInterval = null;
@@ -190,10 +148,8 @@
             const saved = localStorage.getItem('bedtime_v3');
             if (saved) {
                 appState = JSON.parse(saved);
-                // Patch old data if Team Mode default is missing
-                if (!appState.gameMode) appState.gameMode = 'team';
                 if (!appState.profiles['shared']) {
-                   appState.profiles['shared'] = { name: 'The Crew', tasks: JSON.parse(JSON.stringify(defaultTasks)), bestTime: null, missionStartTime: null, missionEndTime: null, unlockedGames: [] };
+                    appState.profiles['shared'] = { name: 'The Crew', tasks: JSON.parse(JSON.stringify(defaultTasks)), bestTime: null, missionStartTime: null, missionEndTime: null, unlockedGames: [] };
                 }
             } else {
                 appState = {
@@ -204,35 +160,17 @@
                     }
                 };
             }
-            bindCurrentProfile();
+            if (!appState.activeProfileId) appState.activeProfileId = 'shared';
         }
 
-        function saveState() {
-            localStorage.setItem('bedtime_v3', JSON.stringify(appState));
-        }
-
-        function bindCurrentProfile() {
-            const p = appState.profiles[appState.activeProfileId];
-            if (!p) {
-                appState.activeProfileId = 'shared';
-                return bindCurrentProfile();
-            }
-            tasks = p.tasks;
-        }
+        function saveState() { localStorage.setItem('bedtime_v3', JSON.stringify(appState)); }
 
         function setGameMode(mode) {
             appState.gameMode = mode;
-            if (mode === 'team') {
-                appState.activeProfileId = 'shared';
-            } else {
-                // If in competition mode, pick the first sibling profile that isn't 'shared'
-                const siblings = Object.keys(appState.profiles).filter(id => id !== 'shared');
-                if (siblings.length > 0) appState.activeProfileId = siblings[0];
-            }
+            appState.activeProfileId = (mode === 'team') ? 'shared' : Object.keys(appState.profiles).find(id => id !== 'shared') || 'shared';
             saveState();
             updateModeUI();
             renderProfiles();
-            bindCurrentProfile();
             renderTasks();
             updateProgress(false);
             syncTimerUI();
@@ -240,45 +178,35 @@
 
         function updateModeUI() {
             const isTeam = appState.gameMode === 'team';
-            document.getElementById('mode-team').className = isTeam ? 'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-indigo-500 text-white shadow-lg' : 'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-indigo-300 hover:text-white';
-            document.getElementById('mode-competition').className = !isTeam ? 'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-indigo-500 text-white shadow-lg' : 'px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-indigo-300 hover:text-white';
+            document.getElementById('mode-team').className = isTeam ? 'px-5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-indigo-500 text-white shadow-lg' : 'px-5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-indigo-300 hover:text-white';
+            document.getElementById('mode-competition').className = !isTeam ? 'px-5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider bg-indigo-500 text-white shadow-lg' : 'px-5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-indigo-300 hover:text-white';
         }
 
         function renderProfiles() {
             const container = document.getElementById('profile-selector');
             container.innerHTML = '';
-            const isComp = appState.gameMode === 'competition';
-
-            if (!isComp) return; // Hidden in Team Mode
-
-            Object.keys(appState.profiles).forEach(id => {
-                if (id === 'shared') return; // Hide internal shared profile from competition list
-
-                const isActive = id === appState.activeProfileId;
-                const btn = document.createElement('button');
-                btn.className = `px-5 py-2.5 rounded-full font-extrabold text-sm transition-all border-2 flex-shrink-0 ${isActive ? 'bg-indigo-500 text-white border-indigo-400 scale-105 shadow-lg' : 'bg-slate-800 text-indigo-300 border-indigo-500/20'}`;
-                btn.onclick = () => switchProfile(id);
-                btn.innerHTML = `<i data-lucide="user" class="w-4 h-4 mr-2 inline"></i>${appState.profiles[id].name}`;
-                container.appendChild(btn);
-            });
-
-            // Add Sibling button
-            const addBtn = document.createElement('button');
-            addBtn.className = "px-4 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm flex items-center gap-2 bg-pink-500/10 text-pink-400 border-2 border-pink-500/30 hover:bg-pink-500/30 flex-shrink-0 border-dashed";
-            addBtn.onclick = addSibling;
-            addBtn.innerHTML = `<i data-lucide="plus" class="w-4 h-4"></i> Add Sibling`;
-            container.appendChild(addBtn);
-
+            if (appState.gameMode === 'competition') {
+                Object.keys(appState.profiles).forEach(id => {
+                    if (id === 'shared') return;
+                    const isActive = id === appState.activeProfileId;
+                    const btn = document.createElement('button');
+                    btn.className = `px-5 py-2.5 rounded-full font-extrabold text-sm transition-all border-2 flex-shrink-0 ${isActive ? 'bg-indigo-500 text-white border-indigo-400 scale-105 shadow-lg' : 'bg-slate-800 text-indigo-300 border-indigo-500/20'}`;
+                    btn.onclick = () => switchProfile(id);
+                    btn.innerHTML = `<i data-lucide="user" class="w-4 h-4 mr-2 inline"></i>${appState.profiles[id].name}`;
+                    container.appendChild(btn);
+                });
+                const addBtn = document.createElement('button');
+                addBtn.className = "px-4 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm flex items-center gap-2 bg-pink-500/10 text-pink-400 border-2 border-pink-500/30 flex-shrink-0 border-dashed";
+                addBtn.onclick = addSibling;
+                addBtn.innerHTML = `<i data-lucide="plus" class="w-4 h-4"></i> Add Astronaut`;
+                container.appendChild(addBtn);
+            }
             lucide.createIcons();
         }
 
         function switchProfile(id) {
-            if (id === appState.activeProfileId) {
-                editAstronaut(id);
-                return;
-            }
+            if (id === appState.activeProfileId) { editAstronaut(id); return; }
             appState.activeProfileId = id;
-            bindCurrentProfile();
             saveState();
             renderProfiles();
             renderTasks();
@@ -293,9 +221,8 @@
                 onConfirm: (name) => {
                     if (!name) return;
                     const id = 'p_' + Date.now();
-                    appState.profiles[id] = { name: name.trim(), tasks: JSON.parse(JSON.stringify(defaultTasks)), bestTime: null, missionStartTime: null, missionEndTime: null, unlockedGames: [] };
-                    saveState();
-                    switchProfile(id);
+                    appState.profiles[id] = { name: name.trim(), tasks: JSON.parse(JSON.stringify(appState.profiles['shared'].tasks)), bestTime: null, missionStartTime: null, missionEndTime: null, unlockedGames: [] };
+                    saveState(); switchProfile(id);
                 }
             });
         }
@@ -303,100 +230,73 @@
         function editAstronaut(id) {
             showModal({
                 title: "Edit Astronaut", isPrompt: true, defaultValue: appState.profiles[id].name, showDelete: true, confirmText: "Save",
-                onDelete: () => {
-                    delete appState.profiles[id];
-                    appState.activeProfileId = 'shared';
-                    saveState();
-                    setGameMode(appState.gameMode);
-                },
+                onDelete: () => { delete appState.profiles[id]; appState.activeProfileId = 'shared'; saveState(); setGameMode(appState.gameMode); },
                 onConfirm: (newName) => { if (newName) { appState.profiles[id].name = newName; saveState(); renderProfiles(); } }
             });
         }
 
-        function formatTime(s) {
-            if (s === null || isNaN(s)) return "--:--";
-            const m = Math.floor(s / 60).toString().padStart(2, '0');
-            const sec = (s % 60).toString().padStart(2, '0');
-            return `${m}:${sec}`;
-        }
-
-        function getElapsed(p) {
-            if (!p.missionStartTime) return 0;
-            const end = p.missionEndTime || Date.now();
-            return Math.floor((end - p.missionStartTime) / 1000);
-        }
+        function formatTime(s) { if (s === null || isNaN(s)) return "--:--"; const m = Math.floor(s / 60).toString().padStart(2, '0'); const sec = (s % 60).toString().padStart(2, '0'); return `${m}:${sec}`; }
+        function getElapsed(p) { if (!p.missionStartTime) return 0; const end = p.missionEndTime || Date.now(); return Math.floor((end - p.missionStartTime) / 1000); }
 
         function syncTimerUI() {
             const p = appState.profiles[appState.activeProfileId];
             if (!p) return;
-            const display = document.getElementById('current-time-display');
-            const bestDisplay = document.getElementById('best-time-display');
-            const timerContainer = document.getElementById('mission-timer');
-            if (p.missionStartTime) {
-                display.innerText = formatTime(getElapsed(p));
-                timerContainer.classList.remove('opacity-0');
-            } else {
-                display.innerText = "00:00";
-                timerContainer.classList.add('opacity-0');
-            }
+            document.getElementById('current-time-display').innerText = formatTime(getElapsed(p));
+            document.getElementById('mission-timer').classList.toggle('opacity-0', !p.missionStartTime);
             if (p.bestTime !== null) {
                 document.getElementById('best-time-container').classList.remove('hidden');
-                bestDisplay.innerText = formatTime(p.bestTime);
-            } else {
-                document.getElementById('best-time-container').classList.add('hidden');
-            }
+                document.getElementById('best-time-display').innerText = formatTime(p.bestTime);
+            } else document.getElementById('best-time-container').classList.add('hidden');
         }
 
         function renderTasks() {
             const container = document.getElementById('task-list');
             container.innerHTML = '';
+            const tasks = appState.profiles[appState.activeProfileId].tasks;
             tasks.forEach(task => {
                 const card = document.createElement('div');
-                card.className = `p-6 rounded-3xl border-4 transition-all transform flex flex-col items-center justify-center gap-3 cursor-pointer shadow-xl ${task.done ? 'bg-slate-800/80 border-emerald-500 opacity-80' : `bg-gradient-to-br ${task.color} border-white/20 hover:scale-105`}`;
-                card.onclick = () => toggleTask(task.id);
+                card.className = `p-6 rounded-3xl border-4 transition-all transform flex flex-col items-center justify-center gap-3 cursor-pointer shadow-xl ${task.done ? 'bg-slate-800/80 border-emerald-500 opacity-80' : `bg-gradient-to-br ${task.color} border-white/20 hover:scale-105`} ${isEditMode ? 'shake-anim border-pink-400' : ''}`;
+                card.onclick = () => isEditMode ? removeTask(task.id) : toggleTask(task.id);
                 if (task.done) card.classList.add('task-done-anim');
-                card.innerHTML = `
-                    <div class="p-4 rounded-2xl bg-white/10"><i data-lucide="${task.done ? 'check-circle' : task.icon}" class="w-10 h-10 text-white"></i></div>
-                    <span class="font-black text-lg text-center ${task.done ? 'line-through text-emerald-400' : ''}">${task.title}</span>
-                `;
+                card.innerHTML = `<div class="p-4 rounded-2xl bg-white/10"><i data-lucide="${isEditMode ? 'trash-2' : (task.done ? 'check-circle' : task.icon)}" class="w-10 h-10 text-white"></i></div><span class="font-black text-lg text-center ${task.done ? 'line-through text-emerald-400' : ''}">${task.title}</span>`;
                 container.appendChild(card);
             });
+            if (isEditMode) {
+                const add = document.createElement('div');
+                add.className = "p-6 rounded-3xl border-4 border-dashed border-indigo-400/50 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-slate-800/50 transition-all";
+                add.onclick = promptNewTask;
+                add.innerHTML = `<div class="p-4 rounded-2xl bg-indigo-500/20"><i data-lucide="plus" class="w-10 h-10 text-indigo-300"></i></div><span class="font-black text-lg text-indigo-300">Add Mission</span>`;
+                container.appendChild(add);
+            }
             lucide.createIcons();
         }
 
         function toggleTask(id) {
-            const t = tasks.find(x => x.id === id);
-            t.done = !t.done;
             const p = appState.profiles[appState.activeProfileId];
-            if (tasks.some(x => x.done) && !p.missionStartTime) {
-                p.missionStartTime = Date.now();
-                p.missionEndTime = null;
-            } else if (!tasks.some(x => x.done)) {
-                p.missionStartTime = null;
-            }
-            if (t.done) {
-                const doneCount = tasks.filter(x => x.done).length;
-                playRocketSound(doneCount, tasks.length);
-                confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
-            }
-            saveState();
-            renderTasks();
-            updateProgress(true);
+            const t = p.tasks.find(x => x.id === id);
+            t.done = !t.done;
+            if (p.tasks.some(x => x.done) && !p.missionStartTime) { p.missionStartTime = Date.now(); p.missionEndTime = null; }
+            else if (!p.tasks.some(x => x.done)) { p.missionStartTime = null; }
+            if (t.done) { playRocketSound(p.tasks.filter(x => x.done).length, p.tasks.length); confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } }); }
+            saveState(); renderTasks(); updateProgress(true);
+        }
+
+        function removeTask(id) {
+            const p = appState.profiles[appState.activeProfileId];
+            p.tasks = p.tasks.filter(x => x.id !== id);
+            saveState(); renderTasks(); updateProgress(false);
         }
 
         function updateProgress(checkFinale) {
-            const done = tasks.filter(x => x.done).length;
-            const total = tasks.length;
+            const p = appState.profiles[appState.activeProfileId];
+            const done = p.tasks.filter(x => x.done).length;
+            const total = p.tasks.length;
             const pct = total === 0 ? 0 : (done / total) * 100;
             document.getElementById('progress-fill').style.width = pct > 5 ? `${pct}%` : '40px';
             document.getElementById('progress-text').innerText = `${done} / ${total} Complete`;
-
             if (checkFinale && total > 0 && done === total) {
-                const p = appState.profiles[appState.activeProfileId];
-                p.missionEndTime = Date.now();
-                saveState();
+                p.missionEndTime = Date.now(); saveState();
                 const siblingIds = Object.keys(appState.profiles).filter(id => id !== 'shared');
-                
                 if (appState.gameMode === 'competition' && siblingIds.length > 1) {
                     const allDone = siblingIds.every(id => appState.profiles[id].tasks.every(t => t.done));
                     if (allDone) triggerSuccess(true);
@@ -418,15 +318,13 @@
                 Object.keys(appState.profiles).filter(id => id !== 'shared').forEach(id => {
                     const p = appState.profiles[id];
                     const time = getElapsed(p);
-                    let rec = "";
-                    if (p.bestTime === null || time < p.bestTime) { p.bestTime = time; rec = " 🌟 RECORD!"; }
+                    let rec = ""; if (p.bestTime === null || time < p.bestTime) { p.bestTime = time; rec = " 🌟 RECORD!"; }
                     container.innerHTML += `<div class="flex justify-between font-black text-indigo-900 bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100"><span>${p.name}</span><span>${formatTime(time)}${rec}</span></div>`;
                 });
             } else {
                 const p = appState.profiles[appState.activeProfileId];
                 const time = getElapsed(p);
-                let rec = "";
-                if (p.bestTime === null || time < p.bestTime) { p.bestTime = time; rec = " 🌟 RECORD!"; }
+                let rec = ""; if (p.bestTime === null || time < p.bestTime) { p.bestTime = time; rec = " 🌟 RECORD!"; }
                 container.innerHTML = `<div class="font-black text-2xl text-indigo-600 bg-indigo-50 px-6 py-2 rounded-full border border-indigo-100 mx-auto w-max">${formatTime(time)}${rec}</div>`;
             }
             saveState();
@@ -454,121 +352,71 @@
         }
 
         function resetMissions() {
-            // Hide everything first
             document.getElementById('success-message').classList.add('hidden');
             document.getElementById('waiting-message').classList.add('hidden');
-            
-            // Reset ALL profile tasks and timers
             Object.keys(appState.profiles).forEach(id => {
                 appState.profiles[id].tasks.forEach(t => t.done = false);
                 appState.profiles[id].missionStartTime = null;
                 appState.profiles[id].missionEndTime = null;
             });
-            
-            saveState();
-            // Just refresh state logic instead of hard reload for better UX
-            bindCurrentProfile();
-            renderTasks();
-            updateProgress(false);
-            syncTimerUI();
-            stopBeat();
+            if (danceInterval) { clearInterval(danceInterval); isPlayingBeat = false; }
+            saveState(); renderTasks(); updateProgress(false); syncTimerUI();
         }
 
-        // --- AUDIO HELPERS ---
         function initCtx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
-
-        function playRocketSound(doneCount, totalCount) {
-            initCtx();
-            const time = audioCtx.currentTime;
-            const progress = doneCount / totalCount;
-            const baseFreq = 150 + (progress * 400); 
-            const peakFreq = baseFreq * 2.5; 
-            const osc1 = audioCtx.createOscillator(); const g1 = audioCtx.createGain();
-            osc1.type = 'sawtooth'; osc1.frequency.setValueAtTime(baseFreq, time); osc1.frequency.exponentialRampToValueAtTime(peakFreq, time + 0.3);
-            g1.gain.setValueAtTime(0.1, time); g1.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
-            osc1.connect(g1); g1.connect(audioCtx.destination); osc1.start(); osc1.stop(time + 0.3);
+        function playRocketSound(done, total) {
+            initCtx(); const time = audioCtx.currentTime; const progress = done / total; const baseFreq = 150 + (progress * 400); const peakFreq = baseFreq * 2.5;
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(baseFreq, time); o.frequency.exponentialRampToValueAtTime(peakFreq, time + 0.3);
+            g.gain.setValueAtTime(0.1, time); g.gain.exponentialRampToValueAtTime(0.01, time + 0.3); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 0.3);
         }
-
         function playSuccessSound() {
             initCtx(); const time = audioCtx.currentTime;
             [440, 554, 659, 880].forEach((f, i) => {
-                const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-                o.type = 'triangle'; o.frequency.value = f;
+                const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'triangle'; o.frequency.value = f;
                 g.gain.setValueAtTime(0, time); g.gain.linearRampToValueAtTime(0.1, time + 0.1 + i*0.1); g.gain.exponentialRampToValueAtTime(0.01, time + 1.5);
                 o.connect(g); g.connect(audioCtx.destination); o.start(time + i*0.1); o.stop(time + 1.5);
             });
         }
-
-        function stopBeat() {
-            if (danceInterval) { clearInterval(danceInterval); isPlayingBeat = false; }
-        }
-
         function toggleBeat() {
-            initCtx();
-            const btn = document.getElementById('beat-btn');
-            if (isPlayingBeat) { 
-                stopBeat();
-                if (btn) {
-                    btn.innerText = "Start Space Beat 🎸"; btn.classList.replace('bg-red-500', 'bg-pink-500');
-                }
-                return; 
-            }
+            initCtx(); const btn = document.getElementById('beat-btn');
+            if (isPlayingBeat) { clearInterval(danceInterval); isPlayingBeat = false; btn.innerText = "Start Space Beat 🎸"; btn.classList.replace('bg-red-500', 'bg-pink-500'); return; }
             isPlayingBeat = true; btn.innerText = "Stop Music 🛑"; btn.classList.replace('bg-pink-500', 'bg-red-500');
             let step = 0;
             danceInterval = setInterval(() => {
-                const time = audioCtx.currentTime;
-                const section = Math.floor((step % 128) / 32);
-                const subStep = step % 16;
-                // Kick
+                const time = audioCtx.currentTime; const section = Math.floor((step % 128) / 32); const subStep = step % 16;
                 if (step % 4 === 0) {
-                    const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-                    o.frequency.setValueAtTime(150, time); o.frequency.exponentialRampToValueAtTime(0.01, time + 0.3);
-                    g.gain.setValueAtTime(section === 1 ? 0.3 : 0.6, time); g.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
-                    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 0.3);
+                    const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.frequency.setValueAtTime(150, time); o.frequency.exponentialRampToValueAtTime(0.01, time + 0.3);
+                    g.gain.setValueAtTime(section === 1 ? 0.3 : 0.6, time); g.gain.exponentialRampToValueAtTime(0.01, time + 0.3); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 0.3);
                 }
-                // Buildup/Snare/Bass Logic...
-                let playSnare = (section >= 1 && (subStep === 4 || subStep === 12));
-                if (section === 1 && step % 128 >= 56) playSnare = (step % 2 === 0);
+                let playSnare = (section >= 1 && (subStep === 4 || subStep === 12)); if (section === 1 && step % 128 >= 56) playSnare = (step % 2 === 0);
                 if (playSnare) {
-                    const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-                    o.type = 'triangle'; o.frequency.setValueAtTime(250, time); o.frequency.exponentialRampToValueAtTime(50, time + 0.1);
-                    g.gain.setValueAtTime(0.3, time); g.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
-                    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 0.1);
+                    const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(250, time); o.frequency.exponentialRampToValueAtTime(50, time + 0.1);
+                    g.gain.setValueAtTime(0.3, time); g.gain.exponentialRampToValueAtTime(0.01, time + 0.1); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 0.1);
                 }
-                let freq = (subStep < 8) ? 110 : (subStep < 12 ? 164 : 146);
-                if (section === 1 && step % 128 >= 56) freq = 110 + ((step % 128 - 56) * 15);
+                if (section >= 2 && step % 2 !== 0) {
+                    const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'square'; o.frequency.setValueAtTime(8000, time);
+                    g.gain.setValueAtTime(0.03, time); g.gain.exponentialRampToValueAtTime(0.01, time + 0.05); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 0.05);
+                }
+                let freq = (subStep < 8) ? 110 : (subStep < 12 ? 164 : 146); if (section === 1 && step % 128 >= 56) freq = 110 + ((step % 128 - 56) * 15);
                 const playBass = (section === 0 ? step % 4 === 0 : (section === 1 ? step % 2 === 0 : true));
                 if (playBass) {
-                    const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-                    o.type = section >= 2 ? 'sawtooth' : 'square'; o.frequency.value = freq;
-                    g.gain.setValueAtTime(0, time); g.gain.linearRampToValueAtTime(0.08, time+0.01); g.gain.exponentialRampToValueAtTime(0.01, time+0.15);
-                    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 0.15);
+                    const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = section >= 2 ? 'sawtooth' : 'square'; o.frequency.value = freq;
+                    g.gain.setValueAtTime(0, time); g.gain.linearRampToValueAtTime(0.08, time+0.01); g.gain.exponentialRampToValueAtTime(0.01, time+0.15); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 0.15);
                 }
                 step++;
             }, 125);
         }
 
-        function fireBigConfetti() {
-            const end = Date.now() + 3000;
-            (function frame() {
-                confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } });
-                confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } });
-                if (Date.now() < end) requestAnimationFrame(frame);
-            }());
-        }
+        function fireBigConfetti() { const end = Date.now() + 3000; (function frame() { confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } }); confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } }); if (Date.now() < end) requestAnimationFrame(frame); }()); }
 
         function showModal({ title, message, isPrompt, defaultValue, showDelete, onDelete, onConfirm }) {
-            const m = document.getElementById('custom-modal');
-            document.getElementById('custom-modal-title').innerText = title;
-            const input = document.getElementById('custom-modal-input');
-            const msg = document.getElementById('custom-modal-message');
-            const del = document.getElementById('custom-modal-delete');
+            const m = document.getElementById('custom-modal'); document.getElementById('custom-modal-title').innerText = title;
+            const input = document.getElementById('custom-modal-input'); const msg = document.getElementById('custom-modal-message'); const del = document.getElementById('custom-modal-delete');
             if (message) { msg.innerText = message; msg.classList.remove('hidden'); } else msg.classList.add('hidden');
             if (isPrompt) { input.value = defaultValue || ''; input.classList.remove('hidden'); input.focus(); } else input.classList.add('hidden');
             if (showDelete) { del.classList.remove('hidden'); del.onclick = () => { if(confirm("Are you sure?")) { m.classList.add('hidden'); onDelete(); } }; } else del.classList.add('hidden');
             document.getElementById('custom-modal-confirm').onclick = () => { m.classList.add('hidden'); onConfirm(input.value); };
-            document.getElementById('custom-modal-cancel').onclick = () => m.classList.add('hidden');
-            m.classList.remove('hidden');
+            document.getElementById('custom-modal-cancel').onclick = () => m.classList.add('hidden'); m.classList.remove('hidden');
         }
 
         function toggleEditMode() {
@@ -580,15 +428,18 @@
             renderProfiles(); renderTasks();
         }
 
-        window.onload = () => {
-            loadState();
-            updateModeUI();
-            renderProfiles();
-            renderTasks();
-            updateProgress(false);
-            setInterval(syncTimerUI, 1000);
-            lucide.createIcons();
-        };
+        function promptNewTask() {
+            showModal({ title: "Add Mission", isPrompt: true, confirmText: "Add", onConfirm: (t) => {
+                if (t) {
+                    const colors = ['from-cyan-400 to-blue-500', 'from-purple-400 to-fuchsia-500', 'from-orange-400 to-amber-500', 'from-pink-400 to-rose-500', 'from-teal-400 to-emerald-500'];
+                    const p = appState.profiles[appState.activeProfileId];
+                    p.tasks.push({ id: 'task_'+Date.now(), title: t, icon: 'star', color: colors[Math.floor(Math.random()*colors.length)], done: false });
+                    saveState(); renderTasks(); updateProgress(false);
+                }
+            }});
+        }
+
+        window.onload = () => { loadState(); updateModeUI(); renderProfiles(); renderTasks(); updateProgress(false); setInterval(syncTimerUI, 1000); lucide.createIcons(); };
     </script>
 </body>
 </html>
