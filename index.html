@@ -44,6 +44,42 @@
         .custom-scrollbar::-webkit-scrollbar { height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.5); border-radius: 10px; }
+
+        /* Astronaut Photo Filter */
+        .astronaut-visor {
+            position: relative;
+            overflow: hidden;
+            border-radius: 40% 40% 35% 35% / 45% 45% 40% 40%;
+            border: 4px solid #e0e7ff;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 0 15px rgba(99, 102, 241, 0.4);
+            background: #1e1b4b;
+        }
+        .astronaut-visor::after {
+            content: '';
+            position: absolute;
+            top: 5%;
+            left: 15%;
+            width: 30%;
+            height: 20%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Camera Flash Effect */
+        @keyframes flash {
+            0% { background: white; opacity: 1; }
+            100% { background: white; opacity: 0; }
+        }
+        .flash-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            pointer-events: none;
+            opacity: 0;
+        }
+        .active-flash { animation: flash 0.3s ease-out forwards; }
     </style>
 </head>
 <body class="bg-gradient-to-b from-indigo-900 via-purple-900 to-slate-900 min-h-screen text-white font-sans antialiased overflow-x-hidden flex flex-col selection:bg-pink-500 selection:text-white">
@@ -58,7 +94,13 @@
 
     <!-- Header -->
     <header class="pb-4 px-4 text-center z-10 relative">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-indigo-300 drop-shadow-lg mb-2">
+        <div id="active-avatar-container" class="mb-4 flex justify-center hidden">
+            <div class="astronaut-visor w-28 h-28 flex items-center justify-center border-white/50">
+                <img id="header-avatar" src="" class="w-full h-full object-cover hidden">
+                <i id="header-avatar-placeholder" data-lucide="user" class="w-10 h-10 text-indigo-300"></i>
+            </div>
+        </div>
+        <h1 id="app-main-title" class="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-indigo-300 drop-shadow-lg mb-2">
             Bedtime Mission! 🚀
         </h1>
         <p class="text-indigo-200 text-lg font-medium max-w-xl mx-auto">Race the clock to unlock a Parent Game!</p>
@@ -120,7 +162,7 @@
                 <div class="absolute inset-0 bg-pink-400 rounded-full animate-ping opacity-20"></div>
                 <div class="relative bg-indigo-900 text-white rounded-full w-full h-full flex items-center justify-center border-4 border-indigo-300 animate-bounce"><i data-lucide="rocket" class="w-12 h-12 text-pink-400 animate-rocket-fly"></i></div>
             </div>
-            <h2 id="success-title" class="text-3xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-indigo-600 uppercase tracking-wide">Mission Complete!</h2>
+            <h2 id="success-title" class="text-3xl font-black mb-4 text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-indigo-600 uppercase tracking-wide leading-tight">Mission Complete!</h2>
             <div id="final-times-container" class="w-full flex flex-col gap-2 mb-6"></div>
             <div class="bg-indigo-50 border-4 border-indigo-100 rounded-2xl p-6 relative mt-4 shadow-sm text-center">
                 <div class="bg-yellow-400 text-yellow-900 text-[10px] font-black uppercase tracking-widest py-1 px-3 rounded-full absolute -top-3 left-1/2 -translate-x-1/2 shadow-sm border border-yellow-300 whitespace-nowrap">Parent Game Unlocked!</div>
@@ -133,7 +175,7 @@
                 <!-- Music Section -->
                 <div id="music-container" class="mt-4 hidden space-y-3">
                     <div class="flex justify-center gap-2 mb-2">
-                        <button onclick="setTrack(0)" id="track-0" class="track-btn px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all bg-indigo-200 text-indigo-700">Track 1</button>
+                        <button onclick="setTrack(0)" id="track-0" class="track-btn px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all bg-indigo-500 text-white shadow-sm">Track 1</button>
                         <button onclick="setTrack(1)" id="track-1" class="track-btn px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all bg-indigo-100 text-indigo-400">Track 2</button>
                         <button onclick="setTrack(2)" id="track-2" class="track-btn px-3 py-1 rounded-full text-[10px] font-bold uppercase transition-all bg-indigo-100 text-indigo-400">Track 3</button>
                     </div>
@@ -168,7 +210,7 @@
         <p id="breathe-text" class="text-2xl font-bold text-indigo-300 animate-pulse mb-12">Inhale...</p>
         
         <div class="max-w-xs w-full bg-slate-900/50 border border-white/10 p-6 rounded-3xl mb-12">
-            <p class="text-sm text-indigo-200 italic italic">"The mission is over, the ship is quiet. Goodnight, brave astronauts."</p>
+            <p class="text-sm text-indigo-200 italic">"The mission is over, the ship is quiet. Goodnight, brave astronauts."</p>
         </div>
 
         <button onclick="resetMissions()" class="text-indigo-400 hover:text-white font-bold tracking-widest text-xs uppercase underline decoration-2 underline-offset-4">End Mission & Reset for Tomorrow</button>
@@ -179,7 +221,39 @@
         <div class="bg-white rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl transform transition-all scale-100" id="custom-modal-inner">
             <h3 id="custom-modal-title" class="text-2xl font-black text-indigo-900 mb-2">Title</h3>
             <p id="custom-modal-message" class="text-indigo-800 font-medium mb-4 hidden"></p>
+            
+            <div id="modal-image-section" class="hidden mb-6 flex flex-col items-center">
+                <div id="camera-container" class="hidden w-full flex flex-col items-center">
+                    <div class="astronaut-visor w-48 h-48 mb-3 flex items-center justify-center relative bg-black">
+                        <video id="viewfinder" autoplay playsinline class="w-full h-full object-cover scale-x-[-1]"></video>
+                        <div class="flash-overlay" id="shutter-flash"></div>
+                    </div>
+                    <button onclick="takeSnapshot()" class="bg-pink-500 text-white p-4 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-all">
+                        <i data-lucide="camera" class="w-8 h-8"></i>
+                    </button>
+                    <button onclick="stopCamera()" class="mt-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Cancel Camera</button>
+                </div>
+
+                <div id="avatar-preview-section" class="flex flex-col items-center">
+                    <div class="astronaut-visor w-32 h-32 bg-slate-100 mb-3 flex items-center justify-center relative group">
+                        <img id="modal-image-preview" src="" class="w-full h-full object-cover hidden">
+                        <i id="modal-image-placeholder" data-lucide="user" class="w-12 h-12 text-slate-300"></i>
+                        <label class="absolute inset-0 bg-indigo-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                            <i data-lucide="upload" class="text-white w-8 h-8"></i>
+                            <input type="file" id="image-upload" class="hidden" accept="image/*">
+                        </label>
+                    </div>
+                    <div class="flex gap-4">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Tap visor to upload</p>
+                        <button onclick="startCamera()" class="text-[10px] text-indigo-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                            <i data-lucide="camera" class="w-3 h-3"></i> Take Selfie
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <input type="text" id="custom-modal-input" class="hidden w-full px-4 py-3 border-2 border-indigo-200 rounded-xl focus:border-indigo-500 mb-4 text-slate-800 font-bold">
+            
             <div class="flex justify-between gap-3 mt-4">
                 <button id="custom-modal-delete" class="hidden px-4 py-2.5 rounded-full bg-red-100 text-red-600 font-bold hover:bg-red-200">Delete</button>
                 <div class="flex gap-2 ml-auto">
@@ -218,6 +292,8 @@
         let audioCtx;
         let lullabyInterval = null;
         let currentTrackIndex = 0;
+        let tempBase64 = null;
+        let cameraStream = null;
 
         function loadState() {
             const saved = localStorage.getItem('bedtime_v5');
@@ -237,14 +313,22 @@
         }
 
         function createProfile(name) {
-            return { name, tasks: JSON.parse(JSON.stringify(defaultTasks)), bestTime: null, missionStartTime: null, missionEndTime: null };
+            return { name, tasks: JSON.parse(JSON.stringify(defaultTasks)), bestTime: null, missionStartTime: null, missionEndTime: null, avatar: null };
         }
 
         function saveState() { localStorage.setItem('bedtime_v5', JSON.stringify(appState)); }
 
         function setGameMode(mode) {
             appState.gameMode = mode;
-            appState.activeProfileId = (mode === 'team') ? 'shared' : Object.keys(appState.profiles).find(id => id !== 'shared') || 'shared';
+            if (mode === 'team') {
+                appState.activeProfileId = 'shared';
+            } else {
+                const siblings = Object.keys(appState.profiles).filter(id => id !== 'shared');
+                if (siblings.length > 0) {
+                    // Stay on current if it's already a sibling, otherwise pick first
+                    if (appState.activeProfileId === 'shared') appState.activeProfileId = siblings[0];
+                }
+            }
             saveState();
             refreshUI();
         }
@@ -255,6 +339,32 @@
             renderTasks();
             updateProgress(false);
             syncTimerUI();
+            updateHeaderTitle();
+        }
+
+        function updateHeaderTitle() {
+            const p = appState.profiles[appState.activeProfileId];
+            if (!p) return;
+            const titleEl = document.getElementById('app-main-title');
+            const avatarContainer = document.getElementById('active-avatar-container');
+            const avatarImg = document.getElementById('header-avatar');
+            const avatarPlaceholder = document.getElementById('header-avatar-placeholder');
+
+            if (p.name === 'The Crew' || appState.activeProfileId === 'shared') {
+                titleEl.innerText = "Bedtime Mission! 🚀";
+                avatarContainer.classList.add('hidden');
+            } else {
+                titleEl.innerText = `${p.name}'s Bedtime Mission! 🚀`;
+                avatarContainer.classList.remove('hidden');
+                if (p.avatar) {
+                    avatarImg.src = p.avatar;
+                    avatarImg.classList.remove('hidden');
+                    avatarPlaceholder.classList.add('hidden');
+                } else {
+                    avatarImg.classList.add('hidden');
+                    avatarPlaceholder.classList.remove('hidden');
+                }
+            }
         }
 
         function updateModeUI() {
@@ -269,11 +379,17 @@
             if (appState.gameMode === 'competition') {
                 Object.keys(appState.profiles).forEach(id => {
                     if (id === 'shared') return;
+                    const p = appState.profiles[id];
                     const isActive = id === appState.activeProfileId;
                     const btn = document.createElement('button');
-                    btn.className = `px-5 py-2.5 rounded-full font-extrabold text-sm transition-all border-2 flex-shrink-0 ${isActive ? 'bg-indigo-500 text-white border-indigo-400 scale-105 shadow-lg' : 'bg-slate-800 text-indigo-300 border-indigo-500/20'}`;
+                    btn.className = `px-4 py-2 rounded-full font-extrabold text-sm transition-all border-2 flex-shrink-0 flex items-center gap-2 ${isActive ? 'bg-indigo-500 text-white border-indigo-400 scale-105 shadow-lg' : 'bg-slate-800 text-indigo-300 border-indigo-500/20'}`;
                     btn.onclick = () => switchProfile(id);
-                    btn.innerHTML = `<i data-lucide="user" class="w-4 h-4 mr-2 inline"></i>${appState.profiles[id].name}`;
+                    
+                    if (p.avatar) {
+                        btn.innerHTML = `<div class="astronaut-visor w-6 h-6 shrink-0 border border-white/40"><img src="${p.avatar}" class="w-full h-full object-cover"></div> ${p.name}`;
+                    } else {
+                        btn.innerHTML = `<i data-lucide="user" class="w-4 h-4 inline"></i>${p.name}`;
+                    }
                     container.appendChild(btn);
                 });
                 const addBtn = document.createElement('button');
@@ -294,18 +410,30 @@
         }
 
         function addSibling() {
-            showModal({ title: "New Astronaut", isPrompt: true, confirmText: "Add", onConfirm: (name) => {
+            tempBase64 = null;
+            showModal({ title: "New Astronaut", isPrompt: true, showImage: true, confirmText: "Add", onConfirm: (name) => {
                 if (!name) return;
                 const id = 'p_' + Date.now();
                 appState.profiles[id] = createProfile(name.trim());
-                saveState(); refreshUI();
+                appState.profiles[id].avatar = tempBase64;
+                saveState(); 
+                // Automatically switch to the new sibling to show their avatar immediately
+                switchProfile(id);
             }});
         }
 
         function editAstronaut(id) {
-            showModal({ title: "Edit Astronaut", isPrompt: true, defaultValue: appState.profiles[id].name, showDelete: true, confirmText: "Save",
+            const p = appState.profiles[id];
+            tempBase64 = p.avatar;
+            showModal({ title: "Edit Astronaut", isPrompt: true, defaultValue: p.name, showDelete: true, showImage: true, currentImage: p.avatar, confirmText: "Save",
                 onDelete: () => { delete appState.profiles[id]; appState.activeProfileId = 'shared'; saveState(); refreshUI(); },
-                onConfirm: (newName) => { if (newName) { appState.profiles[id].name = newName; saveState(); refreshUI(); } }
+                onConfirm: (newName) => { 
+                    if (newName) { 
+                        appState.profiles[id].name = newName; 
+                        appState.profiles[id].avatar = tempBase64;
+                        saveState(); refreshUI(); 
+                    } 
+                }
             });
         }
 
@@ -327,6 +455,7 @@
             const container = document.getElementById('task-list');
             container.innerHTML = '';
             const p = appState.profiles[appState.activeProfileId];
+            if (!p) return;
             p.tasks.forEach(task => {
                 const card = document.createElement('div');
                 card.className = `p-6 rounded-3xl border-4 transition-all transform flex flex-col items-center justify-center gap-3 cursor-pointer shadow-xl ${task.done ? 'bg-slate-800/80 border-emerald-500 opacity-80' : `bg-gradient-to-br ${task.color} border-white/20 hover:scale-105`} ${isEditMode ? 'shake-anim border-pink-400' : ''}`;
@@ -363,6 +492,7 @@
 
         function updateProgress(checkFinale) {
             const p = appState.profiles[appState.activeProfileId];
+            if (!p) return;
             const done = p.tasks.filter(x => x.done).length;
             const total = p.tasks.length;
             const pct = total === 0 ? 0 : (done / total) * 100;
@@ -387,7 +517,6 @@
             document.getElementById('waiting-message').classList.add('hidden');
             const container = document.getElementById('final-times-container');
             container.innerHTML = '';
-            
             const logEntry = { date: new Date().toLocaleDateString(), mode: appState.gameMode, players: [] };
 
             if (isJoint) {
@@ -434,10 +563,7 @@
         window.setTrack = (index) => {
             currentTrackIndex = index;
             updateTrackUI();
-            if (isPlayingBeat) {
-                stopBeat();
-                toggleBeat();
-            }
+            if (isPlayingBeat) { stopBeat(); toggleBeat(); }
         }
 
         function updateTrackUI() {
@@ -460,11 +586,10 @@
             document.getElementById('sleep-mode-overlay').classList.remove('hidden');
             stopBeat();
             playLullaby();
-            
             let toggle = true;
             setInterval(() => {
-                document.getElementById('breathe-text').innerText = toggle ? "Exhale..." : "Inhale...";
-                toggle = !toggle;
+                const breatheEl = document.getElementById('breathe-text');
+                if (breatheEl) { breatheEl.innerText = toggle ? "Exhale..." : "Inhale..."; toggle = !toggle; }
             }, 4000);
         }
 
@@ -479,15 +604,80 @@
             saveState(); refreshUI();
         }
 
-        // --- AUDIO HELPERS ---
+        // --- IMAGE & CAMERA ---
+        document.getElementById('image-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() { compressAndPreview(img); };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function compressAndPreview(img) {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 400;
+            const scaleSize = MAX_WIDTH / img.width;
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleSize;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            tempBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            const preview = document.getElementById('modal-image-preview');
+            const placeholder = document.getElementById('modal-image-placeholder');
+            preview.src = tempBase64;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        }
+
+        async function startCamera() {
+            const container = document.getElementById('camera-container');
+            const previewSection = document.getElementById('avatar-preview-section');
+            const video = document.getElementById('viewfinder');
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+                video.srcObject = cameraStream;
+                container.classList.remove('hidden');
+                previewSection.classList.add('hidden');
+            } catch (err) { alert("Could not access camera. Try uploading a photo!"); }
+        }
+
+        function stopCamera() {
+            if (cameraStream) { cameraStream.getTracks().forEach(track => track.stop()); cameraStream = null; }
+            document.getElementById('camera-container').classList.add('hidden');
+            document.getElementById('avatar-preview-section').classList.remove('hidden');
+        }
+
+        function takeSnapshot() {
+            const video = document.getElementById('viewfinder');
+            const flash = document.getElementById('shutter-flash');
+            flash.classList.add('active-flash');
+            setTimeout(() => flash.classList.remove('active-flash'), 300);
+            if (!audioCtx) initCtx();
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o.type = 'square'; o.frequency.setValueAtTime(200, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+            o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.1);
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
+            ctx.drawImage(video, 0, 0);
+            const img = new Image();
+            img.onload = () => { compressAndPreview(img); stopCamera(); };
+            img.src = canvas.toDataURL('image/jpeg');
+        }
+
+        // --- AUDIO ---
         function initCtx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
-        
         function playRocketSound(done, total) {
             initCtx(); const time = audioCtx.currentTime; const progress = done / total; const baseFreq = 150 + (progress * 400); const peakFreq = baseFreq * 2.5;
             const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(baseFreq, time); o.frequency.exponentialRampToValueAtTime(peakFreq, time + 0.3);
             g.gain.setValueAtTime(0.1, time); g.gain.exponentialRampToValueAtTime(0.01, time + 0.3); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 0.3);
         }
-
         function playSuccessSound() {
             initCtx(); const time = audioCtx.currentTime;
             [440, 554, 659, 880].forEach((f, i) => {
@@ -496,113 +686,64 @@
                 o.connect(g); g.connect(audioCtx.destination); o.start(time + i*0.1); o.stop(time + 1.5);
             });
         }
-
         function toggleBeat() {
             initCtx(); const btn = document.getElementById('beat-btn');
             if (isPlayingBeat) { stopBeat(); btn.innerText = "Start Space Beat 🎸"; btn.classList.replace('bg-red-500', 'bg-pink-500'); return; }
             isPlayingBeat = true; btn.innerText = "Stop Music 🛑"; btn.classList.replace('bg-pink-500', 'bg-red-500');
-            
             let step = 0;
             danceInterval = setInterval(() => {
                 const time = audioCtx.currentTime;
-                
                 if (currentTrackIndex === 0) {
-                    // TRACK 1: Techno (Existing Structure)
-                    const section = Math.floor((step % 128) / 32);
-                    const subStep = step % 16;
+                    const section = Math.floor((step % 128) / 32); const subStep = step % 16;
                     if (step % 4 === 0) playKick(150, section === 1 ? 0.3 : 0.6, time);
-                    let playSnare = (section >= 1 && (subStep === 4 || subStep === 12));
-                    if (section === 1 && step % 128 >= 56) playSnare = (step % 2 === 0);
-                    if (playSnare) playSnareDrum(250, 0.3, time);
-                    if (section >= 2 && step % 2 !== 0) playHiHat(0.03, time);
-                    let freq = (subStep < 8) ? 110 : (subStep < 12 ? 164 : 146);
-                    if (section === 1 && step % 128 >= 56) freq = 110 + ((step % 128 - 56) * 15);
-                    if (section === 0 ? step % 4 === 0 : (section === 1 ? step % 2 === 0 : true)) {
-                        playBass(freq, section >= 2 ? 'sawtooth' : 'square', 0.08, time);
-                    }
+                    let playSnare = (section >= 1 && (subStep === 4 || subStep === 12)); if (section === 1 && step % 128 >= 56) playSnare = (step % 2 === 0);
+                    if (playSnare) playSnareDrum(250, 0.3, time); if (section >= 2 && step % 2 !== 0) playHiHat(0.03, time);
+                    let freq = (subStep < 8) ? 110 : (subStep < 12 ? 164 : 146); if (section === 1 && step % 128 >= 56) freq = 110 + ((step % 128 - 56) * 15);
+                    if (section === 0 ? step % 4 === 0 : (section === 1 ? step % 2 === 0 : true)) playBass(freq, section >= 2 ? 'sawtooth' : 'square', 0.08, time);
                 } else if (currentTrackIndex === 1) {
-                    // TRACK 2: Space Funk (Bouncy, Syncopated)
-                    const subStep = step % 16;
-                    if (subStep === 0 || subStep === 8 || subStep === 10) playKick(120, 0.7, time);
-                    if (subStep === 4 || subStep === 12) playSnareDrum(200, 0.4, time);
-                    if (subStep % 2 !== 0) playHiHat(0.05, time);
-                    const funkNotes = [110, 110, 130, 146, 110, 164, 110, 130];
-                    if (subStep % 2 === 0) playBass(funkNotes[Math.floor(subStep/2)], 'sawtooth', 0.1, time);
+                    const subStep = step % 16; if (subStep === 0 || subStep === 8 || subStep === 10) playKick(120, 0.7, time);
+                    if (subStep === 4 || subStep === 12) playSnareDrum(200, 0.4, time); if (subStep % 2 !== 0) playHiHat(0.05, time);
+                    if (subStep % 2 === 0) playBass([110, 110, 130, 146, 110, 164, 110, 130][Math.floor(subStep/2)], 'sawtooth', 0.1, time);
                 } else {
-                    // TRACK 3: Star Jumper (High Speed Hyper-pop)
-                    const subStep = step % 8;
-                    playKick(180, 0.8, time); // Continuous Driving Kick
-                    if (subStep === 2 || subStep === 6) playSnareDrum(400, 0.5, time);
-                    playHiHat(0.08, time); // Non-stop hats
-                    const note = [220, 246, 261, 293][Math.floor(step/16) % 4];
-                    playBass(note, 'sawtooth', 0.12, time);
+                    playKick(180, 0.8, time); if ((step % 8) === 2 || (step % 8) === 6) playSnareDrum(400, 0.5, time);
+                    playHiHat(0.08, time); playBass([220, 246, 261, 293][Math.floor(step/16) % 4], 'sawtooth', 0.12, time);
                 }
-                
                 step++;
             }, currentTrackIndex === 2 ? 100 : 125);
         }
-
-        // Drum Component Helpers
-        function playKick(freq, vol, time) {
-            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-            o.frequency.setValueAtTime(freq, time); o.frequency.exponentialRampToValueAtTime(0.01, time + 0.3);
-            g.gain.setValueAtTime(vol, time); g.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
-            o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 0.3);
-        }
-        function playSnareDrum(freq, vol, time) {
-            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-            o.type = 'triangle'; o.frequency.setValueAtTime(freq, time); o.frequency.exponentialRampToValueAtTime(50, time + 0.1);
-            g.gain.setValueAtTime(vol, time); g.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
-            o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 0.1);
-        }
-        function playHiHat(vol, time) {
-            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-            o.type = 'square'; o.frequency.setValueAtTime(8000, time);
-            g.gain.setValueAtTime(vol, time); g.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
-            o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 0.05);
-        }
-        function playBass(freq, type, vol, time) {
-            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-            o.type = type; o.frequency.value = freq;
-            g.gain.setValueAtTime(0, time); g.gain.linearRampToValueAtTime(vol, time+0.01); g.gain.exponentialRampToValueAtTime(0.01, time+0.15);
-            o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 0.15);
-        }
-
-        function playLullaby() {
-            initCtx(); let step = 0; const notes = [329.63, 392.00, 440.00, 523.25];
-            lullabyInterval = setInterval(() => {
-                const time = audioCtx.currentTime;
-                const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
-                o.type = 'sine'; o.frequency.setValueAtTime(notes[step % 4], time);
-                g.gain.setValueAtTime(0, time); g.gain.linearRampToValueAtTime(0.05, time + 0.5); g.gain.exponentialRampToValueAtTime(0.001, time + 2);
-                o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 2); step++;
-            }, 1500);
-        }
-
+        function playKick(f,v,t) { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(0.01, t + 0.3); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.3); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(t + 0.3); }
+        function playSnareDrum(f,v,t) { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'triangle'; o.frequency.setValueAtTime(f, t); o.frequency.exponentialRampToValueAtTime(50, t + 0.1); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.1); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(t + 0.1); }
+        function playHiHat(v,t) { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'square'; o.frequency.setValueAtTime(8000, t); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.01, t + 0.05); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(t + 0.05); }
+        function playBass(f,type,v,t) { const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = type; o.frequency.value = f; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t+0.01); g.gain.exponentialRampToValueAtTime(0.01, t+0.15); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(t + 0.15); }
+        function playLullaby() { initCtx(); let step = 0; lullabyInterval = setInterval(() => { const time = audioCtx.currentTime; const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime([329.63, 392.00, 440.00, 523.25][step % 4], time); g.gain.setValueAtTime(0, time); g.gain.linearRampToValueAtTime(0.05, time + 0.5); g.gain.exponentialRampToValueAtTime(0.001, time + 2); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time + 2); step++; }, 1500); }
         function stopBeat() { if (danceInterval) { clearInterval(danceInterval); isPlayingBeat = false; } }
         function stopLullaby() { if (lullabyInterval) clearInterval(lullabyInterval); }
 
+        // --- HELPERS ---
         function fireBigConfetti() { const end = Date.now() + 3000; (function frame() { confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } }); confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } }); if (Date.now() < end) requestAnimationFrame(frame); }()); }
-
-        function showModal({ title, message, isPrompt, defaultValue, showDelete, onDelete, onConfirm }) {
+        function showModal({ title, message, isPrompt, defaultValue, showDelete, onDelete, onConfirm, showImage, currentImage }) {
             const m = document.getElementById('custom-modal'); document.getElementById('custom-modal-title').innerText = title;
             const input = document.getElementById('custom-modal-input'); const msg = document.getElementById('custom-modal-message'); const del = document.getElementById('custom-modal-delete');
+            const imgSection = document.getElementById('modal-image-section'); const imgPreview = document.getElementById('modal-image-preview'); const imgPlaceholder = document.getElementById('modal-image-placeholder');
             if (message) { msg.innerText = message; msg.classList.remove('hidden'); } else msg.classList.add('hidden');
-            if (isPrompt) { input.value = defaultValue || ''; input.classList.remove('hidden'); input.focus(); } else input.classList.add('hidden');
+            if (isPrompt) { input.value = defaultValue || ''; input.classList.remove('hidden'); } else input.classList.add('hidden');
             if (showDelete) { del.classList.remove('hidden'); del.onclick = () => { if(confirm("Are you sure?")) { m.classList.add('hidden'); onDelete(); } }; } else del.classList.add('hidden');
-            document.getElementById('custom-modal-confirm').onclick = () => { m.classList.add('hidden'); onConfirm(input.value); };
-            document.getElementById('custom-modal-cancel').onclick = () => m.classList.add('hidden'); m.classList.remove('hidden');
+            if (showImage) {
+                imgSection.classList.remove('hidden'); document.getElementById('camera-container').classList.add('hidden'); document.getElementById('avatar-preview-section').classList.remove('hidden');
+                if (currentImage) { imgPreview.src = currentImage; imgPreview.classList.remove('hidden'); imgPlaceholder.classList.add('hidden'); }
+                else { imgPreview.classList.add('hidden'); imgPlaceholder.classList.remove('hidden'); }
+            } else imgSection.classList.add('hidden');
+            document.getElementById('custom-modal-confirm').onclick = () => { m.classList.add('hidden'); onConfirm(input.value); stopCamera(); };
+            document.getElementById('custom-modal-cancel').onclick = () => { m.classList.add('hidden'); stopCamera(); };
+            m.classList.remove('hidden'); if (isPrompt) input.focus(); lucide.createIcons();
         }
-
         function toggleEditMode() {
             isEditMode = !isEditMode;
-            const btnSpan = document.querySelector('#edit-toggle-btn span');
-            btnSpan.innerText = isEditMode ? "Done Editing" : "Make it your own";
+            const btnSpan = document.querySelector('#edit-toggle-btn span'); btnSpan.innerText = isEditMode ? "Done Editing" : "Make it your own";
             if (isEditMode) document.getElementById('edit-toggle-btn').classList.replace('text-indigo-400', 'text-pink-400');
             else { document.getElementById('edit-toggle-btn').classList.replace('text-pink-400', 'text-indigo-400'); saveState(); }
             refreshUI();
         }
-
         function promptNewTask() {
             showModal({ title: "Add Mission", isPrompt: true, confirmText: "Add", onConfirm: (t) => {
                 if (t) {
@@ -612,10 +753,7 @@
                 }
             }});
         }
-
-        function showFeatureComingSoon() {
-            showModal({ title: "Cloud Sync", message: "This feature is coming soon! You'll be able to sign in with Google to sync your missions across all your family devices.", onConfirm: () => {} });
-        }
+        function showFeatureComingSoon() { showModal({ title: "Cloud Sync", message: "This feature is coming soon! You'll be able to sign in with Google to sync your missions across all your family devices.", onConfirm: () => {} }); }
 
         window.onload = () => { loadState(); refreshUI(); setInterval(syncTimerUI, 1000); lucide.createIcons(); };
     </script>
