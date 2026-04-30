@@ -117,10 +117,13 @@
     <!-- Mode Toggle & Profile Bar -->
     <div class="max-w-4xl mx-auto w-full px-4 mb-4 z-10 relative">
         <div class="flex flex-col sm:flex-row items-center gap-4 mb-4">
+            <!-- Mode Toggle -->
             <div class="flex bg-slate-800/80 p-1 rounded-full border border-indigo-500/20 shrink-0">
                 <button onclick="setGameMode('team')" id="mode-team" class="px-5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all">Together</button>
                 <button onclick="setGameMode('competition')" id="mode-competition" class="px-5 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-all">Competition</button>
             </div>
+            
+            <!-- Profile Tabs (Visible only in Competition Mode) -->
             <div id="profile-selector" class="flex gap-3 overflow-x-auto pb-2 custom-scrollbar px-2 w-full"></div>
         </div>
     </div>
@@ -275,14 +278,14 @@
         ];
 
         const parentRewards = [
-            { id: 'r1', title: "Robot Mode 🤖", desc: "Piggyback ride to bed! The kid controls the 'Parent Robot' with buttons on your shoulders." },
-            { id: 'r2', title: "The Buttons Game 🔘", desc: "Kid clicks your fingers like buttons. You react with tickles, bounces, or silly sounds!" },
-            { id: 'r3', title: "Impromptu Dance Party 🕺", desc: "One minute of wild dancing! Tap the music button below." },
-            { id: 'r4', title: "The Floor is Lava 🌋", desc: "Get to bed in 10 seconds without touching the floor!" },
-            { id: 'r5', title: "Tickle Monster 👾", desc: "Unleash the tickle monster for 30 seconds!" },
-            { id: 'r6', title: "Kids' Choice! 👑", desc: "The Kid-stronauts get to choose the mini-game that the Parents will lead" },
-            { id: 'r7', title: "Blanket Burrito 🌯", desc: "Wrap the kid up tight like a burrito and 'deliver' them to bed!" },
-            { id: 'r8', title: "Space Launch 🚀", desc: "Swing the child between two adults (the gantry) and launch them gently onto the bed!" }
+            { id: 'r1', title: "Robot Mode 🤖", desc: "Hop on for a piggyback ride! The Kid is the pilot and steers the 'Parent Robot' by tapping buttons on your shoulders. 'BEEP. BOOP. TURN LEFT.'" },
+            { id: 'r2', title: "The Buttons Game 🔘", desc: "Parent lays on the floor with knees up, kid sits on top. Parent holds hands up as 'control panels'. Kid clicks buttons to trigger Parent reactions: tickle, bumpy ride, drop back, or silly noises!" },
+            { id: 'r3', title: "Impromptu Dance Party 🕺", desc: "One minute of wild dancing! Tapping the track buttons below lets the Kid change the Space DJ's vibe." },
+            { id: 'r4', title: "The Floor is Lava 🌋", desc: "Kid directs the path to bed! Parent has to bridge the gaps or save the astronauts from touching the floor." },
+            { id: 'r5', title: "The Magic Remote 📺", desc: "The Kid holds an invisible remote pointed at the Parent. Kid shouts 'Slow-Mo', 'Fast Forward', or 'Pause' and Parent must act it out while getting to bed!" },
+            { id: 'r6', title: "Wind-Up Parents 🧸", desc: "Parents are giant toys that ran out of juice! Kid has to 'twist the key' on Parent's back to make them tick and walk toward the bed." },
+            { id: 'r7', title: "The Parent Puppet 🧵", desc: "Parent is a puppet on strings. Kid 'pulls' the Parent's arms and legs to guide the giant puppet to the bedroom." },
+            { id: 'r8', title: "Kids' Choice! 👑", desc: "The Kid-stronauts get to invent a brand new way for the Parents to be silly tonight!" }
         ];
 
         let appState = null;
@@ -325,7 +328,6 @@
             } else {
                 const siblings = Object.keys(appState.profiles).filter(id => id !== 'shared');
                 if (siblings.length > 0) {
-                    // Stay on current if it's already a sibling, otherwise pick first
                     if (appState.activeProfileId === 'shared') appState.activeProfileId = siblings[0];
                 }
             }
@@ -417,7 +419,6 @@
                 appState.profiles[id] = createProfile(name.trim());
                 appState.profiles[id].avatar = tempBase64;
                 saveState(); 
-                // Automatically switch to the new sibling to show their avatar immediately
                 switchProfile(id);
             }});
         }
