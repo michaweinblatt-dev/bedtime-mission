@@ -22,14 +22,18 @@
         @keyframes breathe { 0%, 100% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 1; } }
         .astronaut-visor { position: relative; overflow: hidden; border-radius: 40% 40% 35% 35% / 45% 45% 40% 40%; border: 4px solid #e0e7ff; box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 0 15px rgba(99, 102, 241, 0.4); background: #1e1b4b; }
         .astronaut-visor::after { content: ''; position: absolute; top: 5%; left: 15%; width: 30%; height: 20%; background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%); border-radius: 50%; pointer-events: none; z-index: 10; }
+        .active-flash { animation: flash 0.3s ease-out forwards; }
+        @keyframes flash { 0% { background: white; opacity: 1; } 100% { background: white; opacity: 0; } }
         .custom-scrollbar::-webkit-scrollbar { height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.3); border-radius: 10px; }
+        .ai-loading-glow { animation: ai-glow 1.5s infinite alternate; }
+        @keyframes ai-glow { 0% { box-shadow: 0 0 5px rgba(192, 132, 252, 0.5); } 100% { box-shadow: 0 0 20px rgba(192, 132, 252, 0.9); } }
     </style>
 </head>
 <body class="bg-gradient-to-b from-indigo-900 via-purple-900 to-slate-900 min-h-screen text-white font-sans antialiased overflow-x-hidden flex flex-col selection:bg-pink-500 selection:text-white">
 
-    <div class="w-full flex justify-end p-4 z-20 relative">
-        <button onclick="window.showFeatureComingSoon()" class="flex items-center gap-2 bg-slate-800/40 hover:bg-indigo-500/30 px-4 py-2 rounded-full border border-indigo-500/20 transition-all text-xs font-bold text-indigo-300">
+    <div class="w-full flex justify-end p-4 z-20 relative text-slate-800">
+        <button onclick="window.showFeatureComingSoon()" class="flex items-center gap-2 bg-slate-800/40 hover:bg-indigo-500/30 px-4 py-2 rounded-full border border-indigo-500/20 transition-all text-xs font-bold text-indigo-300 text-slate-100">
             <i data-lucide="cloud-upload" class="w-4 h-4"></i> Cloud Backup
         </button>
     </div>
@@ -42,7 +46,7 @@
             </div>
         </div>
         <h1 id="app-main-title" class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-indigo-300 drop-shadow-lg mb-2 uppercase tracking-tighter">Bedtime Mission</h1>
-        <p class="text-indigo-200 text-sm md:text-base font-bold tracking-wide text-center">Unlock tonight's <span class="text-pink-400 font-black">Secret Parent Game!</span></p>
+        <p class="text-indigo-200 text-sm md:text-base font-bold tracking-wide text-center">Complete your mission to unlock tonight's <span class="text-pink-400 font-black">Secret Parent Game!</span></p>
         
         <div id="mission-timer" class="inline-block mt-4 px-6 py-2 rounded-full bg-slate-800/50 border border-indigo-500/30 text-indigo-300 font-mono text-2xl shadow-inner mb-2 transition-opacity opacity-0">
             <span id="current-time-display">00:00</span>
@@ -98,7 +102,7 @@
         <div class="bg-white rounded-[40px] p-6 sm:p-8 max-w-md w-full mx-4 text-center shadow-2xl h-[95vh] sm:h-auto overflow-y-auto flex flex-col">
             
             <div class="flex items-center justify-center gap-2 mb-6 text-emerald-500">
-                <i data-lucide="zap" class="w-5 h-5"></i>
+                <i data-lucide="zap" class="w-5 h-5 text-emerald-500"></i>
                 <h2 class="text-xl font-black text-slate-400 uppercase tracking-widest">Mission Success</h2>
             </div>
 
@@ -106,41 +110,42 @@
             <div id="prize-card" class="bg-gradient-to-b from-indigo-600 to-indigo-800 rounded-[32px] p-6 relative shadow-xl text-white mb-6 flex-grow flex flex-col justify-center border-4 border-indigo-400">
                 <div class="bg-yellow-400 text-yellow-950 text-[11px] font-black uppercase tracking-[0.2em] py-2 px-6 rounded-full absolute -top-4 left-1/2 -translate-x-1/2 shadow-lg border-2 border-white whitespace-nowrap">Tonight's Prize Game</div>
                 
-                <div id="collection-badge" class="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300 opacity-80">Game 1 of 8 Unlocked</div>
+                <div id="collection-badge" class="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300 opacity-80">Collection: 1 of 8 Unlocked</div>
 
                 <p id="reward-text" class="text-3xl sm:text-4xl font-black mb-4 leading-tight drop-shadow-md uppercase"></p>
                 
                 <div class="bg-white/10 backdrop-blur-sm p-5 rounded-2xl border border-white/10 mb-4 text-center relative overflow-hidden" id="reward-container-inner">
                     <div id="ai-loading-indicator" class="hidden absolute inset-0 bg-indigo-900/80 backdrop-blur-sm flex flex-col items-center justify-center z-20">
                         <i data-lucide="sparkles" class="w-8 h-8 text-purple-300 animate-spin mb-2"></i>
-                        <p class="text-xs font-black uppercase tracking-widest text-purple-200">Thinking...</p>
+                        <p class="text-xs font-black uppercase tracking-widest text-purple-200 text-slate-100">Generating Game...</p>
                     </div>
                     <p class="text-[10px] font-black uppercase text-indigo-300 mb-2 tracking-[0.2em]">Parent Instructions:</p>
-                    <p id="reward-description" class="text-sm sm:text-lg font-bold leading-relaxed text-indigo-50"></p>
+                    <p id="reward-description" class="text-sm sm:text-base font-bold leading-relaxed text-indigo-50"></p>
                 </div>
 
                 <div id="music-container" class="hidden space-y-3">
                     <div class="flex justify-center gap-2">
-                        <button onclick="window.setTrack(0)" id="track-0" class="track-btn px-4 py-2 rounded-xl text-[10px] font-black uppercase">Trk 1</button>
-                        <button onclick="window.setTrack(1)" id="track-1" class="track-btn px-4 py-2 rounded-xl text-[10px] font-black uppercase">Trk 2</button>
-                        <button onclick="window.setTrack(2)" id="track-2" class="track-btn px-4 py-2 rounded-xl text-[10px] font-black uppercase">Trk 3 ⚡</button>
+                        <button onclick="window.setTrack(0)" id="track-0" class="track-btn px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all bg-indigo-500/50">Trk 1</button>
+                        <button onclick="window.setTrack(1)" id="track-1" class="track-btn px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all bg-indigo-500/50">Trk 2</button>
+                        <button onclick="window.setTrack(2)" id="track-2" class="track-btn px-4 py-2 rounded-xl text-[10px] font-black uppercase transition-all bg-indigo-500/50">Trk 3 ⚡</button>
                     </div>
-                    <button id="beat-btn" onclick="window.toggleBeat()" class="w-full bg-pink-500 hover:bg-pink-400 text-white font-black py-4 rounded-2xl shadow-lg flex items-center justify-center gap-3"><i data-lucide="play" class="w-5 h-5 fill-current"></i> Start Space Beat</button>
+                    <button id="beat-btn" onclick="window.toggleBeat()" class="w-full bg-pink-500 hover:bg-pink-400 text-white font-black py-4 rounded-2xl shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-transform"><i data-lucide="play" class="w-5 h-5 fill-current text-white"></i> Start Space Beat</button>
                 </div>
 
                 <button onclick="window.respinReward()" class="mt-6 bg-white/10 hover:bg-white/20 text-white font-black py-3 rounded-2xl text-[10px] uppercase tracking-widest transition-all">
-                    <i data-lucide="refresh-cw" class="w-3 h-3 inline mr-1"></i> Spin classic game
+                    <i data-lucide="refresh-cw" class="w-3 h-3 inline mr-1"></i> Spin another classic
                 </button>
             </div>
 
             <div class="flex flex-col gap-3 mb-6">
-                <button id="ai-game-btn" onclick="window.generateAiGame()" class="bg-purple-100 hover:bg-purple-200 text-purple-700 font-black py-4 rounded-2xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
-                    <i data-lucide="sparkles" class="w-4 h-4"></i> ✨ Create AI Mystery Game
-                </button>
                 <div class="flex gap-2">
                     <button onclick="window.showStats()" class="flex-1 bg-slate-100 text-slate-600 font-black py-4 rounded-2xl text-xs uppercase tracking-widest flex items-center justify-center gap-2">Stats</button>
-                    <button onclick="window.startSleepMode()" class="flex-[2] bg-slate-900 text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg hover:bg-indigo-950 transition-colors"><i data-lucide="moon" class="w-4 h-4"></i> Sleep Mode 🌙</button>
+                    <button onclick="window.startSleepMode()" class="flex-[2] bg-slate-900 text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg hover:bg-indigo-950 transition-colors active:scale-95 transition-transform text-center"><i data-lucide="moon" class="w-4 h-4"></i> Sleep Mode 🌙</button>
                 </div>
+                <!-- Secondary Call to Action for AI Mystery -->
+                <button id="ai-game-btn" onclick="window.generateAiGame()" class="bg-purple-50 hover:bg-purple-100 text-purple-600 font-black py-3 rounded-2xl text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
+                    <i data-lucide="sparkles" class="w-4 h-4"></i> ✨ Try an AI Mystery Game
+                </button>
             </div>
             
             <div id="final-times-container" class="w-full space-y-1 opacity-50 pb-2 text-center text-[10px] font-black uppercase"></div>
@@ -152,15 +157,15 @@
         <div class="bg-white rounded-[40px] p-8 max-w-md w-full mx-4 shadow-2xl h-[80vh] overflow-y-auto relative text-slate-800">
             <button onclick="document.getElementById('stats-modal').classList.add('hidden')" class="absolute top-6 right-6 text-slate-300 hover:text-slate-500"><i data-lucide="x-circle" class="w-8 h-8"></i></button>
             <h3 class="text-2xl font-black text-indigo-900 mb-6 flex items-center gap-2 uppercase text-center"><i data-lucide="bar-chart-2"></i> Mission Log</h3>
-            <div id="tonight-stats-container" class="mb-8 text-center"><p class="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest border-b pb-1">Tonight's Speed</p><div id="task-stats-list" class="space-y-2"></div></div>
+            <div id="tonight-stats-container" class="mb-8 text-center"><p class="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest border-b pb-1">Tonight's Speed Breakdown</p><div id="task-stats-list" class="space-y-2"></div></div>
             <div id="history-stats-container" class="text-center"><p class="text-[10px] font-black uppercase text-slate-400 mb-3 tracking-widest border-b pb-1">Historical Records</p><div id="history-list" class="space-y-3 text-left"></div></div>
         </div>
     </div>
 
     <!-- Common Modal -->
     <div id="custom-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm text-slate-800">
-        <div class="bg-white rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl" id="custom-modal-inner text-slate-800">
-            <h3 id="custom-modal-title" class="text-2xl font-black text-indigo-900 mb-2 text-center uppercase tracking-tight"></h3>
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full mx-4 shadow-2xl" id="custom-modal-inner">
+            <h3 id="custom-modal-title" class="text-2xl font-black text-indigo-900 mb-2 text-center uppercase tracking-tight text-slate-800"></h3>
             <p id="custom-modal-message" class="text-slate-500 text-sm mb-4 hidden text-center"></p>
             <div id="modal-image-section" class="hidden mb-6 flex flex-col items-center">
                 <div id="camera-container" class="hidden w-full flex flex-col items-center">
@@ -181,11 +186,11 @@
                 </div>
             </div>
             <input type="text" id="custom-modal-input" class="hidden w-full px-4 py-3 border-2 border-indigo-200 rounded-xl mb-4 text-slate-800 font-bold focus:border-indigo-500 outline-none">
-            <div class="flex justify-between gap-3 mt-4">
+            <div class="flex justify-between gap-3 mt-4 text-slate-800">
                 <button id="custom-modal-delete" class="hidden px-4 py-2.5 rounded-full bg-red-100 text-red-600 font-bold hover:bg-red-200 transition-colors">Delete</button>
                 <div class="flex gap-2 ml-auto">
-                    <button id="custom-modal-cancel" class="px-5 py-2.5 rounded-full text-slate-400 font-bold hover:text-slate-600 transition-colors">Cancel</button>
-                    <button id="custom-modal-confirm" class="px-5 py-2.5 rounded-full bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-colors">Confirm</button>
+                    <button id="custom-modal-cancel" class="px-5 py-2.5 rounded-full text-slate-400 font-bold hover:text-slate-600 transition-colors text-slate-800">Cancel</button>
+                    <button id="custom-modal-confirm" class="px-5 py-2.5 rounded-full bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-colors text-center text-slate-100">Confirm</button>
                 </div>
             </div>
         </div>
@@ -203,22 +208,18 @@
     </div>
 
     <script>
-        // --- 1. CONFIG & STATE ---
+        // --- 1. CONFIG & GLOBAL STATE ---
         const apiKey = "";
-        let appState = null, isEditMode = false, isPlayingBeat = false, danceInterval = null, audioCtx = null, currentTrackIndex = 0, tempBase64 = null, cameraStream = null, lullabyInterval = null;
+        let appState = null, isEditMode = false, isPlayingBeat = false, audioCtx = null, currentAudio = null, currentTrackIndex = 0, tempBase64 = null, cameraStream = null, lullabyInterval = null;
 
+        // Music Playlist (Switched to Wikimedia Commons links which are much more stable for iframes)
         const SPACE_DJ_PLAYLIST = [
-            { id: 0, tick: (s, t) => { if(s%4===0) playKick(150,0.6,t); if(s%16===4||s%16===12) playSnareDrum(250,0.3,t); } },
-            { id: 1, tick: (s, t) => { if(s%8===0||s%8===6) playKick(120,0.7,t); if(s%16===4) playSnareDrum(200,0.4,t); } },
-            { id: 2, tick: (s, t) => { 
-                const l = s % 64; 
-                if (l < 32) { if (s % 4 === 0) playKick(140, 0.8, t); if (s % 8 === 4) playSnareDrum(300, 0.4, t); }
-                else if (l < 48) { if (s % 2 === 0) playSnareDrum(400 + (l-32)*10, 0.3, t); playKick(140, 0.6, t); }
-                else { playKick(160, 0.9, t); if (s % 4 === 2) playSnareDrum(800, 0.5, t); playBass([261, 329, 392, 523][Math.floor((s%16)/4)], 'sawtooth', 0.1, t); }
-            }}
+            { id: 0, name: 'Adventure Beat', url: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/Lounge_Loop.ogg' },
+            { id: 1, name: 'Cosmic Groove', url: 'https://upload.wikimedia.org/wikipedia/commons/b/be/T-S-T_Loop.ogg' },
+            { id: 2, name: 'Hyper Jump', url: 'https://upload.wikimedia.org/wikipedia/commons/7/73/Fast_Techno_Loop.ogg' }
         ];
 
-        // --- 2. CORE DATA HELPERS ---
+        // --- 2. HOISTED DATA HELPERS ---
         function defaultTasks() { return [{ id: 'brush', title: 'Brushing Teeth', icon: 'smile', color: 'from-cyan-400 to-blue-500', done: false }, { id: 'bathroom', title: 'Bathroom', icon: 'droplet', color: 'from-blue-400 to-indigo-500', done: false }, { id: 'pajamas', title: 'Pajamas', icon: 'shirt', color: 'from-purple-400 to-fuchsia-500', done: false }, { id: 'books', title: 'Reading Books', icon: 'book-open', color: 'from-orange-400 to-amber-500', done: false }, { id: 'fun', title: 'Having Fun', icon: 'gamepad-2', color: 'from-pink-400 to-rose-500', done: false }]; }
         
         function getRewards() { 
@@ -238,10 +239,10 @@
         function formatTime(s) { if (s === null || isNaN(s)) return "00:00"; const m = Math.floor(s / 60).toString().padStart(2, '0'); const sec = (Math.floor(s) % 60).toString().padStart(2, '0'); return `${m}:${sec}`; }
         function getElapsed(p) { if (!p || !p.missionStartTime) return 0; const end = p.missionEndTime || Date.now(); return (end - p.missionStartTime) / 1000; }
 
-        function saveState() { if (appState) localStorage.setItem('bedtime_v24_final', JSON.stringify(appState)); }
+        function saveState() { if (appState) localStorage.setItem('bedtime_v25_stable_sync', JSON.stringify(appState)); }
 
         function loadState() {
-            const saved = localStorage.getItem('bedtime_v24_final');
+            const saved = localStorage.getItem('bedtime_v25_stable_sync');
             if (saved) { appState = JSON.parse(saved); if (!appState.usageHistory) appState.usageHistory = []; if (!appState.unlockedGames) appState.unlockedGames = []; } 
             else { appState = { gameMode: 'team', activeProfileId: 'shared', unlockedGames: [], usageHistory: [], profiles: { 'shared': createProfile('The Crew') } }; }
             refreshUI();
@@ -262,8 +263,9 @@
         function refreshUI() {
             if (!appState) return;
             const isT = appState.gameMode === 'team';
-            document.getElementById('mode-team').className = isT ? 'px-5 py-1.5 rounded-full text-xs font-black uppercase bg-indigo-500 text-white shadow-lg transition-all' : 'px-5 py-1.5 rounded-full text-xs font-black uppercase text-indigo-300';
-            document.getElementById('mode-competition').className = !isT ? 'px-5 py-1.5 rounded-full text-xs font-black uppercase bg-indigo-500 text-white shadow-lg transition-all' : 'px-5 py-1.5 rounded-full text-xs font-black uppercase text-indigo-300';
+            const bT = document.getElementById('mode-team'), bC = document.getElementById('mode-competition');
+            if(bT) bT.className = isT ? 'px-5 py-1.5 rounded-full text-xs font-black uppercase bg-indigo-500 text-white shadow-lg transition-all' : 'px-5 py-1.5 rounded-full text-xs font-black uppercase text-indigo-300 transition-all';
+            if(bC) bC.className = !isT ? 'px-5 py-1.5 rounded-full text-xs font-black uppercase bg-indigo-500 text-white shadow-lg transition-all' : 'px-5 py-1.5 rounded-full text-xs font-black uppercase text-indigo-300 transition-all';
             const cont = document.getElementById('profile-selector');
             if(cont) {
                 cont.innerHTML = '';
@@ -278,45 +280,12 @@
                         let mc = p.missionStartTime && !p.missionEndTime ? `<span class="text-[10px] font-mono text-pink-400 mini-clock" data-pid="${id}">${formatTime(getElapsed(p))}</span>` : (p.missionEndTime ? `<span class="text-[10px] text-emerald-400 uppercase font-bold">Done</span>` : '');
                         b.innerHTML = `<div class="flex items-center gap-2 text-slate-100">${av} <span>${p.name}</span></div>${mc}`; cont.appendChild(b);
                     });
-                    const add = document.createElement('button'); add.className = "px-4 py-3 rounded-[20px] font-bold text-xs bg-pink-500/10 text-pink-400 border-2 border-pink-500/30 flex-shrink-0 border-dashed hover:bg-pink-500/20 transition-all";
+                    const add = document.createElement('button'); add.className = "px-4 py-3 rounded-[20px] font-bold text-xs bg-pink-500/10 text-pink-400 border-2 border-pink-500/30 flex-shrink-0 border-dashed hover:bg-pink-500/20 transition-all text-slate-100";
                     add.onclick = window.addSibling; add.innerHTML = `+ Add Astronaut`; cont.appendChild(add);
                 }
             }
             window.renderTasks(); updateProgress(false); syncTimerUI(); window.updateHeaderTitle(); lucide.createIcons();
         }
-
-        // --- 3. ATTACH TO WINDOW SCOPE ---
-        window.loadState = loadState;
-        window.saveState = saveState;
-        window.refreshUI = refreshUI;
-        window.syncTimerUI = syncTimerUI;
-        window.createProfile = createProfile;
-
-        window.setGameMode = (mode) => { if(!appState) return; appState.gameMode = mode; if (mode === 'team') appState.activeProfileId = 'shared'; else { const sibs = Object.keys(appState.profiles).filter(id => id !== 'shared'); if (sibs.length > 0 && appState.activeProfileId === 'shared') appState.activeProfileId = sibs[0]; } saveState(); refreshUI(); };
-        
-        window.renderTasks = () => {
-            const cont = document.getElementById('task-list'); if(!cont || !appState) return; cont.innerHTML = '';
-            const p = appState.profiles[appState.activeProfileId]; if (!p) return;
-            p.tasks.forEach(t => {
-                const c = document.createElement('div'); c.className = `p-6 rounded-[32px] border-4 flex flex-col items-center justify-center gap-3 cursor-pointer shadow-xl transition-all ${t.done ? 'bg-slate-800/80 border-emerald-500 opacity-80' : `bg-gradient-to-br ${t.color || 'from-cyan-400 to-blue-500'} border-white/20 hover:scale-105`} ${isEditMode ? 'shake-anim border-pink-400' : ''}`;
-                c.onclick = () => isEditMode ? window.removeTask(t.id) : window.toggleTask(t.id);
-                if (t.done) c.classList.add('task-done-anim');
-                c.innerHTML = `<div class="p-4 rounded-[20px] bg-white/10"><i data-lucide="${isEditMode ? 'trash-2' : (t.done ? 'check-circle' : t.icon)}" class="w-10 h-10 text-white"></i></div><span class="font-black text-lg text-center ${t.done ? 'line-through text-emerald-400' : ''}">${t.title}</span>`; cont.appendChild(c);
-            });
-            if(isEditMode) { const add = document.createElement('div'); add.className = "p-6 rounded-[32px] border-4 border-dashed border-indigo-400/50 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-slate-800/50 transition-all text-center"; add.onclick = window.promptNewTask; add.innerHTML = `<div class="p-4 rounded-[20px] bg-indigo-500/20 mx-auto"><i data-lucide="plus" class="w-10 h-10 text-indigo-300"></i></div><span class="font-black text-lg text-indigo-300 uppercase tracking-tighter block mt-2 text-center">Add Mission</span>`; cont.appendChild(add); }
-        };
-
-        window.toggleTask = async (id) => {
-            if(!appState) return; const p = appState.profiles[appState.activeProfileId], t = p.tasks.find(x => x.id === id);
-            if (!audioCtx) await window.initCtx(); if (!p.missionStartTime) { p.missionStartTime = Date.now(); p.lastTaskAt = p.missionStartTime; }
-            t.done = !t.done;
-            if (t.done) {
-                const now = Date.now(); t.duration = (now - (p.lastTaskAt || p.missionStartTime)) / 1000; p.lastTaskAt = now;
-                window.playRocketSound(p.tasks.filter(x => x.done).length, p.tasks.length);
-                confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
-            } else { t.completedAt = null; t.duration = null; }
-            saveState(); renderTasks(); updateProgress(true);
-        };
 
         function updateProgress(checkFinale) {
             if (!appState) return; const p = appState.profiles[appState.activeProfileId]; if (!p) return;
@@ -330,12 +299,62 @@
                     if(sibs.every(id => appState.profiles[id].tasks.every(t => t.done))) window.triggerSuccess(true);
                     else {
                         const waiting = sibs.filter(id => !appState.profiles[id].tasks.every(t => t.done)).map(id => appState.profiles[id].name);
-                        document.getElementById('waiting-for-names').innerText = waiting.join(' and ');
+                        const namesEl = document.getElementById('waiting-for-names'); if(namesEl) namesEl.innerText = waiting.join(' and ');
                         document.getElementById('waiting-message')?.classList.remove('hidden'); refreshUI();
                     }
                 } else window.triggerSuccess(false);
             }
         }
+
+        function setRewardUI(r, shouldUnlock = false) {
+            if (shouldUnlock && appState && !appState.unlockedGames.includes(r.id)) { appState.unlockedGames.push(r.id); saveState(); }
+            const rT = document.getElementById('reward-text'), rD = document.getElementById('reward-description');
+            if (rT) rT.innerText = r.title; if (rD) rD.innerText = r.desc;
+            const badge = document.getElementById('collection-badge');
+            if (badge && appState) badge.innerText = `Collection: ${appState.unlockedGames.length} of ${getRewards().length} Unlocked`;
+            const m = document.getElementById('music-container'); if (m && r.title) { m.classList.toggle('hidden', !r.title.includes("Dance")); if (!m.classList.contains('hidden')) window.updateTrackUI(); }
+        }
+
+        function updateTrackUI() {
+            document.querySelectorAll('.track-btn').forEach((btn, i) => {
+                btn.className = i === currentTrackIndex ? 'track-btn px-4 py-2 rounded-xl text-[10px] font-black uppercase bg-white text-indigo-900 shadow-sm border-2 border-white scale-105 transition-all' : 'track-btn px-4 py-2 rounded-xl text-[10px] font-black uppercase bg-indigo-500/50 border border-white/10 text-indigo-100 opacity-60';
+            });
+        }
+
+        // --- 4. ATTACH TO WINDOW SCOPE ---
+        window.loadState = loadState;
+        window.saveState = saveState;
+        window.refreshUI = refreshUI;
+        window.syncTimerUI = syncTimerUI;
+        window.updateTrackUI = updateTrackUI;
+        window.setRewardUI = setRewardUI;
+        window.createProfile = createProfile;
+
+        window.setGameMode = (mode) => { if(!appState) return; appState.gameMode = mode; if (mode === 'team') appState.activeProfileId = 'shared'; else { const sibs = Object.keys(appState.profiles).filter(id => id !== 'shared'); if (sibs.length > 0 && appState.activeProfileId === 'shared') appState.activeProfileId = sibs[0]; } saveState(); refreshUI(); };
+        
+        window.renderTasks = () => {
+            const cont = document.getElementById('task-list'); if(!cont || !appState) return; cont.innerHTML = '';
+            const p = appState.profiles[appState.activeProfileId]; if (!p) return;
+            p.tasks.forEach(t => {
+                const c = document.createElement('div'); c.className = `p-6 rounded-[32px] border-4 flex flex-col items-center justify-center gap-3 cursor-pointer shadow-xl transition-all ${t.done ? 'bg-slate-800/80 border-emerald-500 opacity-80' : `bg-gradient-to-br ${t.color || 'from-cyan-400 to-blue-500'} border-white/20 hover:scale-105`} ${isEditMode ? 'shake-anim border-pink-400' : ''}`;
+                c.onclick = () => isEditMode ? window.removeTask(t.id) : window.toggleTask(t.id);
+                if (t.done) c.classList.add('task-done-anim');
+                c.innerHTML = `<div class="p-4 rounded-[20px] bg-white/10"><i data-lucide="${isEditMode ? 'trash-2' : (t.done ? 'check-circle' : t.icon)}" class="w-10 h-10 text-white"></i></div><span class="font-black text-lg text-center ${t.done ? 'line-through text-emerald-400' : ''}">${t.title}</span>`; cont.appendChild(c);
+            });
+            if(isEditMode) { const add = document.createElement('div'); add.className = "p-6 rounded-[32px] border-4 border-dashed border-indigo-400/50 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-slate-800/50 transition-all text-center"; add.onclick = window.promptNewTask; add.innerHTML = `<div class="p-4 rounded-[20px] bg-indigo-500/20 mx-auto"><i data-lucide="plus" class="w-10 h-10 text-indigo-300"></i></div><span class="font-black text-lg text-indigo-300 uppercase tracking-tighter block mt-2 text-center text-slate-100">Add Mission</span>`; cont.appendChild(add); }
+        };
+
+        window.toggleTask = async (id) => {
+            if(!appState) return; const p = appState.profiles[appState.activeProfileId], t = p.tasks.find(x => x.id === id);
+            if (!audioCtx) await window.initCtx(); if (!p.missionStartTime) { p.missionStartTime = Date.now(); p.lastTaskAt = p.missionStartTime; }
+            t.done = !t.done;
+            if (t.done) {
+                const now = Date.now(); t.duration = (now - (p.lastTaskAt || p.missionStartTime)) / 1000; p.lastTaskAt = now;
+                window.playRocketSound(p.tasks.filter(x => x.done).length, p.tasks.length);
+                confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
+            } else { t.completedAt = null; t.duration = null; }
+            saveState(); renderTasks(); updateProgress(true);
+        };
 
         window.triggerSuccess = (isJoint) => {
             document.getElementById('waiting-message')?.classList.add('hidden');
@@ -357,38 +376,43 @@
             document.getElementById('success-message')?.classList.remove('hidden'); window.playSuccessSound(); window.fireBigConfetti();
         };
 
-        window.setRewardUI = (r, shouldUnlock = false) => {
-            if (shouldUnlock && appState && !appState.unlockedGames.includes(r.id)) { appState.unlockedGames.push(r.id); saveState(); }
-            document.getElementById('reward-text').innerText = r.title; document.getElementById('reward-description').innerText = r.desc;
-            const badge = document.getElementById('collection-badge');
-            if (badge) badge.innerText = `Game ${appState.unlockedGames.length} of ${getRewards().length} Unlocked`;
-            const m = document.getElementById('music-container'); if (m) { m.classList.toggle('hidden', !r.title.includes("Dance")); if (!m.classList.contains('hidden')) window.updateTrackUI(); }
-        };
-
-        window.updateTrackUI = () => {
-            document.querySelectorAll('.track-btn').forEach((btn, i) => {
-                btn.className = i === currentTrackIndex ? 'track-btn px-4 py-2 rounded-xl text-[10px] font-black uppercase bg-white text-indigo-900 shadow-sm border-2 border-white scale-105 transition-all' : 'track-btn px-4 py-2 rounded-xl text-[10px] font-black uppercase bg-indigo-500/50 border border-white/10 text-indigo-100 opacity-60';
-            });
-        };
-
-        window.toggleBeat = async () => {
-            if(!audioCtx) await window.initCtx(); const btn = document.getElementById('beat-btn');
-            if (isPlayingBeat) { stopBeat(); if(btn) btn.innerHTML = '<i data-lucide="play" class="w-5 h-5 fill-current"></i> Start Space Beat'; lucide.createIcons(); return; }
-            isPlayingBeat = true; if(btn) btn.innerHTML = '<i data-lucide="square" class="w-5 h-5 fill-current"></i> Stop Music'; lucide.createIcons();
-            let step = 0; danceInterval = setInterval(() => {
-                const time = audioCtx.currentTime;
-                const track = SPACE_DJ_PLAYLIST[currentTrackIndex]; if (track) track.tick(step, time);
-                step++;
-            }, currentTrackIndex === 2 ? 150 : 125);
-        };
-
-        window.setTrack = (index) => { currentTrackIndex = index; window.updateTrackUI(); if (isPlayingBeat) { stopBeat(); window.toggleBeat(); } };
-
         window.updateHeaderTitle = () => {
             if(!appState) return; const p = appState.profiles[appState.activeProfileId]; if (!p) return;
             const tEl = document.getElementById('app-main-title'), ac = document.getElementById('active-avatar-container');
             if(appState.activeProfileId === 'shared') { if(tEl) tEl.innerText = "Bedtime Mission"; ac?.classList.add('hidden'); }
             else { if(tEl) tEl.innerText = `${p.name}'s Bedtime Mission`; ac?.classList.remove('hidden'); const img = document.getElementById('header-avatar'), ph = document.getElementById('header-avatar-placeholder'); if(p.avatar && img) { img.src=p.avatar; img.classList.remove('hidden'); ph?.classList.add('hidden'); } else { img?.classList.add('hidden'); ph?.classList.remove('hidden'); } }
+        };
+
+        window.toggleBeat = async () => {
+            const btn = document.getElementById('beat-btn');
+            if (isPlayingBeat) {
+                if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+                isPlayingBeat = false;
+                if(btn) btn.innerHTML = '<i data-lucide="play" class="w-5 h-5 fill-current text-white"></i> Start Space Beat';
+            } else {
+                isPlayingBeat = true;
+                if(btn) btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin text-white"></i> Loading...';
+                currentAudio = new Audio(SPACE_DJ_PLAYLIST[currentTrackIndex].url);
+                currentAudio.loop = true;
+                currentAudio.play().then(() => {
+                    if(btn) btn.innerHTML = '<i data-lucide="square" class="w-5 h-5 fill-current text-white"></i> Stop Music';
+                }).catch(err => {
+                    isPlayingBeat = false;
+                    if(btn) btn.innerHTML = '<i data-lucide="alert-circle" class="w-5 h-5 text-white"></i> Fail';
+                });
+            }
+            lucide.createIcons();
+        };
+
+        window.setTrack = (index) => {
+            currentTrackIndex = index;
+            window.updateTrackUI();
+            if (isPlayingBeat) {
+                if (currentAudio) { currentAudio.pause(); }
+                currentAudio = new Audio(SPACE_DJ_PLAYLIST[currentTrackIndex].url);
+                currentAudio.loop = true;
+                currentAudio.play().catch(() => {});
+            }
         };
 
         window.showStats = () => {
@@ -402,10 +426,11 @@
 
         window.resetMissions = () => {
             Object.keys(appState.profiles).forEach(id => { appState.profiles[id].tasks.forEach(t => t.done = false); appState.profiles[id].missionStartTime = null; appState.profiles[id].missionEndTime = null; });
+            if (currentAudio) { currentAudio.pause(); currentAudio = null; isPlayingBeat = false; }
             if (lullabyInterval) clearInterval(lullabyInterval); document.getElementById('sleep-mode-overlay')?.classList.add('hidden'); document.getElementById('success-message')?.classList.add('hidden'); saveState(); refreshUI();
         };
 
-        window.startSleepMode = () => { document.getElementById('success-message')?.classList.add('hidden'); document.getElementById('sleep-mode-overlay')?.classList.remove('hidden'); stopBeat(); window.playLullaby(); let toggle = true; setInterval(() => { const b = document.getElementById('breathe-text'); if(b) { b.innerText = toggle ? "Exhale..." : "Inhale..."; toggle = !toggle; } }, 4000); };
+        window.startSleepMode = () => { document.getElementById('success-message')?.classList.add('hidden'); document.getElementById('sleep-mode-overlay')?.classList.remove('hidden'); if(currentAudio) { currentAudio.pause(); currentAudio = null; isPlayingBeat = false; } window.playLullaby(); let toggle = true; setInterval(() => { const b = document.getElementById('breathe-text'); if(b) { b.innerText = toggle ? "Exhale..." : "Inhale..."; toggle = !toggle; } }, 4000); };
         window.respinReward = () => { const rewards = getRewards(); window.setRewardUI(rewards[Math.floor(Math.random() * rewards.length)], false); const box = document.getElementById('prize-card'); if(box) { box.classList.add('shake-anim'); setTimeout(() => box.classList.remove('shake-anim'), 500); } };
         window.toggleEditMode = () => { isEditMode = !isEditMode; const span = document.querySelector('#edit-toggle-btn span'); if (span) span.innerText = isEditMode ? "Done Editing" : "Make it your own"; if (isEditMode) document.getElementById('edit-toggle-btn')?.classList.replace('text-indigo-400', 'text-pink-400'); else { document.getElementById('edit-toggle-btn')?.classList.replace('text-pink-400', 'text-indigo-400'); saveState(); } refreshUI(); };
         window.addSibling = () => { tempBase64 = null; showModal({ title: "New Astronaut", isPrompt: true, showImage: true, confirmText: "Add", onConfirm: (name) => { if (!name) return; const id = 'p_' + Date.now(); appState.profiles[id] = window.createProfile(name.trim()); appState.profiles[id].avatar = tempBase64; appState.activeProfileId = id; saveState(); refreshUI(); } }); };
@@ -413,26 +438,37 @@
         window.removeTask = (id) => { const p = appState.profiles[appState.activeProfileId]; p.tasks = p.tasks.filter(x => x.id !== id); saveState(); refreshUI(); };
         window.promptNewTask = () => { showModal({ title: "Add Mission", isPrompt: true, confirmText: "Add", onConfirm: (t) => { if (t) { const p = appState.profiles[appState.activeProfileId]; if (p) { p.tasks.push({ id: 'task_'+Date.now(), title: t, icon: 'star', color: 'from-cyan-400 to-blue-500', done: false }); saveState(); refreshUI(); } } } }); };
         
-        // --- 4. API & AUDIO ENGINE ---
+        // --- 5. AUDIO & API ENGINE ---
         window.initCtx = async () => { if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') await audioCtx.resume(); } return audioCtx; };
         window.playRocketSound = (d, t) => { if(!audioCtx) return; const b = 150 + (d/t*400); const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.type = 'sawtooth'; o.frequency.setValueAtTime(b, audioCtx.currentTime); o.frequency.exponentialRampToValueAtTime(b*2.5, audioCtx.currentTime+0.3); g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+0.3); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+0.3); };
         window.playSuccessSound = () => { if(!audioCtx) return; [440, 554, 659, 880].forEach((f, i) => { const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0, audioCtx.currentTime); g.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime+0.1+i*0.1); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime+1.5); o.connect(g); g.connect(audioCtx.destination); o.start(audioCtx.currentTime+i*0.1); o.stop(audioCtx.currentTime+1.5); }); };
         window.playLullaby = () => { if(!audioCtx) return; let step=0; lullabyInterval=setInterval(() => { const time=audioCtx.currentTime; const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.type='sine'; o.frequency.setValueAtTime([329.63, 392.00, 440.00, 523.25][step % 4], time); g.gain.setValueAtTime(0,time); g.gain.linearRampToValueAtTime(0.05,time+0.5); g.gain.exponentialRampToValueAtTime(0.001,time+2); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(time+2); step++; }, 1500); };
         window.fireBigConfetti = () => { const end=Date.now()+3000; (function frame() { confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 } }); confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 } }); if (Date.now() < end) requestAnimationFrame(frame); }()); };
-        function stopBeat() { if (danceInterval) { clearInterval(danceInterval); isPlayingBeat = false; } }
 
-        async function fetchWithRetry(url, p, retries = 5) { let d = 1000; for (let i = 0; i < retries; i++) { try { const r = await fetch(url, { method: 'POST', body: JSON.stringify(p) }); if (r.ok) return await r.json(); } catch (e) {} await new Promise(res => setTimeout(res, d)); d *= 2; } throw new Error("API Fail"); }
+        async function fetchWithRetry(url, payload, retries = 5) {
+            let delay = 1000;
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, { method: 'POST', body: JSON.stringify(payload) });
+                    if (response.ok) return await response.json();
+                } catch (e) {}
+                await new Promise(res => setTimeout(res, delay));
+                delay *= 2;
+            }
+            throw new Error("Gemini Connection Failed");
+        }
 
         window.generateAiGame = async () => {
             const btn = document.getElementById('ai-game-btn'), loader = document.getElementById('ai-loading-indicator'), tEl = document.getElementById('reward-text'), dEl = document.getElementById('reward-description');
             loader.classList.remove('hidden'); btn.disabled = true;
             try {
-                const p = `Simulate a Bluey show game. One simple silly rule. Parent is an object (car, rock, statue). Kid is the boss. Max 15 words. Respond JSON: { "title": "Game Name", "desc": "Instruction" }`;
+                // ULTRA-SIMPLE PHYSICAL RULE PROMPT
+                const p = `Simulate a Bluey show game. One simple silly physical rule. Parent is an object (like a car, rock, or statue). Kid is the boss. Max 10 words. Respond JSON ONLY: { "title": "Game Name", "desc": "Instruction" }`;
                 const res = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, { contents: [{ parts: [{ text: p }] }], generationConfig: { responseMimeType: "application/json" } });
                 const game = JSON.parse(res.candidates[0].content.parts[0].text);
                 tEl.innerText = game.title + " ✨"; dEl.innerText = game.desc;
                 confetti({ particleCount: 50, spread: 80, colors: ['#a855f7', '#ec4899'] });
-            } catch (e) { dEl.innerText = "Signal lost. Try a classic game!"; } finally { loader.classList.add('hidden'); btn.disabled = false; }
+            } catch (e) { dEl.innerText = "Mission Control connection lost. Try a classic game!"; } finally { loader.classList.add('hidden'); btn.disabled = false; }
         };
 
         function showModal({ title, message, isPrompt, defaultValue, showDelete, onDelete, onConfirm, showImage, currentImage }) {
@@ -451,11 +487,7 @@
         window.takeSnapshot = () => { const vf = document.getElementById('viewfinder'), flash = document.getElementById('shutter-flash'); flash?.classList.add('active-flash'); setTimeout(() => flash?.classList.remove('active-flash'), 300); window.initCtx().then(() => { const o = audioCtx.createOscillator(), g = audioCtx.createGain(); o.type = 'square'; o.frequency.setValueAtTime(200, audioCtx.currentTime); g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime + 0.1); }); const canvas = document.createElement('canvas'); canvas.width = vf.videoWidth; canvas.height = vf.videoHeight; const ctx = canvas.getContext('2d'); ctx.translate(canvas.width, 0); ctx.scale(-1, 1); ctx.drawImage(vf, 0, 0); const img = new Image(); img.onload = () => { const c = document.createElement('canvas'); c.width = 400; c.height = img.height * (400 / img.width); c.getContext('2d').drawImage(img, 0, 0, 400, c.height); tempBase64 = c.toDataURL('image/jpeg', 0.7); const p = document.getElementById('modal-image-preview'); if(p) { p.src = tempBase64; p.classList.remove('hidden'); } document.getElementById('modal-image-placeholder')?.classList.add('hidden'); window.stopCamera(); }; img.src = canvas.toDataURL('image/jpeg'); };
         window.showFeatureComingSoon = () => { showModal({ title: "Cloud Backup", message: "Coming soon! Sync across all devices.", onConfirm: () => {} }); };
 
-        function playKick(f,v,t) { if(!audioCtx) return; const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(v,t); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(t+0.3); }
-        function playSnareDrum(f,v,t) { if(!audioCtx) return; const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type='triangle'; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(v,t); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(t+0.1); }
-        function playBass(f,type,v,t) { if(!audioCtx) return; const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type=type; o.frequency.value=f; g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(v,t+0.01); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(t+0.15); }
-
-        // --- 5. BOOT SEQUENCE ---
+        // --- 6. BOOT SEQUENCE ---
         window.onload = window.loadState;
         setInterval(() => { if (window.syncTimerUI) window.syncTimerUI(); }, 1000);
     </script>
