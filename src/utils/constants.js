@@ -19,11 +19,12 @@ export const SPACE_DJ_PLAYLIST = [
 
 export function getDefaultTasks() {
   return [
-    { id: 'brush',    title: 'Brushing Teeth', icon: 'smile',     color: 'from-cyan-400 to-blue-500',     done: false },
-    { id: 'bathroom', title: 'Bathroom',        icon: 'droplet',   color: 'from-blue-400 to-indigo-500',   done: false },
-    { id: 'pajamas',  title: 'Pajamas',         icon: 'shirt',     color: 'from-purple-400 to-fuchsia-500',done: false },
-    { id: 'books',    title: 'Reading Books',   icon: 'book-open', color: 'from-orange-400 to-amber-500',  done: false },
-    { id: 'fun',      title: 'Having Fun',      icon: 'gamepad-2', color: 'from-pink-400 to-rose-500',     done: false },
+    { id: 'plate',    title: 'Clear Your Plate', icon: 'utensils', color: 'from-orange-400 to-amber-500',  done: false },
+    { id: 'upstairs', title: 'Head Upstairs',    icon: 'arrow-up', color: 'from-cyan-400 to-blue-500',     done: false },
+    { id: 'pajamas',  title: 'Pajamas',          icon: 'shirt',    color: 'from-purple-400 to-fuchsia-500',done: false },
+    { id: 'bathroom', title: 'Bathroom',         icon: 'droplet',  color: 'from-blue-400 to-indigo-500',   done: false },
+    { id: 'brush',    title: 'Brush Teeth',      icon: 'smile',    color: 'from-pink-400 to-rose-500',     done: false },
+    { id: 'fun',      title: 'Having Fun',       icon: 'gamepad-2',color: 'from-pink-400 to-rose-500',     done: false },
   ];
 }
 

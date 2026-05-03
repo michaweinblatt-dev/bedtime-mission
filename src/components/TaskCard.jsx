@@ -2,6 +2,7 @@ import {
   Smile, Droplet, Shirt, BookOpen, Gamepad2, Star,
   CheckCircle, Trash2,
   Moon, Sun, Heart, Zap, Music, Coffee, Apple, Cloud,
+  Utensils, ArrowUp,
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -18,6 +19,8 @@ const ICON_MAP = {
   'music':      Music,
   'coffee':     Coffee,
   'apple':      Apple,
+  'utensils':   Utensils,
+  'arrow-up':   ArrowUp,
   'cloud':      Cloud,
 };
 
