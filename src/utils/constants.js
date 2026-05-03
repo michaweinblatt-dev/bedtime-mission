@@ -1,5 +1,17 @@
 export const STORAGE_KEY = 'bedtime_v29_final_sync';
 
+export const MAIN_SUBTITLES = [
+  "Complete your missions to unlock tonight's parent challenge.",
+  "Finish strong. Tonight's game is worth it.",
+  "Your missions unlock something good tonight.",
+];
+
+export const HANDOFF_LINES = [
+  "Hand this to a parent. Their turn now.",
+  "Mission complete. Parents: read your orders.",
+  "Kid-stronauts: your work here is done. Parents: you're up.",
+];
+
 export const SPACE_DJ_PLAYLIST = [
   { id: 0, name: 'Rocket Pajama Party', url: 'https://raw.githubusercontent.com/michaweinblatt-dev/bedtime-mission/main/Rocket.mp3' },
   { id: 1, name: 'Moonboot Dance Party', url: 'https://raw.githubusercontent.com/michaweinblatt-dev/bedtime-mission/main/moonbot.mp3' },
@@ -35,6 +47,7 @@ export function getDefaultAppState() {
     gameMode: 'team',
     activeProfileId: 'shared',
     rewardDuration: 120,
+    currentGameIndex: 0,
     unlockedGames: [],
     usageHistory: [],
     profiles: {

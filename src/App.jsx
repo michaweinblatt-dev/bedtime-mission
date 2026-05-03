@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { CloudUpload, Palette, User, Plus } from 'lucide-react';
 
-import { STORAGE_KEY, SPACE_DJ_PLAYLIST, getDefaultTasks, getRewards, getDefaultAppState } from './utils/constants';
+import { STORAGE_KEY, SPACE_DJ_PLAYLIST, getDefaultTasks, getRewards, getDefaultAppState, MAIN_SUBTITLES } from './utils/constants';
 import { formatTime, getElapsed } from './utils/helpers';
 import { useAudio } from './hooks/useAudio';
 
@@ -21,6 +21,7 @@ function loadPersistedState() {
       const s = JSON.parse(saved);
       if (!s.usageHistory) s.usageHistory = [];
       if (!s.unlockedGames) s.unlockedGames = [];
+      if (s.currentGameIndex === undefined) s.currentGameIndex = 0;
       return s;
     }
   } catch {}
@@ -41,6 +42,7 @@ export default function App() {
   const [finalTimes, setFinalTimes] = useState([]);
   const [waitingMessage, setWaitingMessage] = useState(null);
   const [tick, setTick] = useState(0); // increments every second to drive timer display
+  const [subtitle] = useState(() => MAIN_SUBTITLES[Math.floor(Math.random() * MAIN_SUBTITLES.length)]);
 
   const rewardTimerRef = useRef(null);
   const currentAudioRef = useRef(null);
@@ -150,16 +152,13 @@ export default function App() {
     }
 
     const rewards = getRewards();
-    const reward = rewards[Math.floor(Math.random() * rewards.length)];
-    const unlockedGames = stateSnapshot.unlockedGames.includes(reward.id)
-      ? stateSnapshot.unlockedGames
-      : [...stateSnapshot.unlockedGames, reward.id];
+    const currentIdx = (stateSnapshot.currentGameIndex ?? 0) % rewards.length;
+    const reward = rewards[currentIdx];
 
     const finalState = {
       ...stateSnapshot,
       profiles: updatedProfiles,
       usageHistory: [...(stateSnapshot.usageHistory || []), log],
-      unlockedGames,
     };
 
     saveAppState(finalState);
@@ -259,7 +258,8 @@ export default function App() {
     }
     if (rewardTimerRef.current) clearInterval(rewardTimerRef.current);
     stopLullaby();
-    const next = { ...appState, profiles };
+    const nextGameIndex = ((appState.currentGameIndex ?? 0) + 1) % 10;
+    const next = { ...appState, profiles, currentGameIndex: nextGameIndex };
     saveAppState(next);
     setShowSleepMode(false);
     setShowSuccess(false);
@@ -337,10 +337,17 @@ export default function App() {
   // ── Reward spinning ───────────────────────────────────────────────────────────
   const respinReward = useCallback(() => {
     const rewards = getRewards();
-    const reward = rewards[Math.floor(Math.random() * rewards.length)];
+    const currentIdx = appState.currentGameIndex ?? 0;
+    // Build pool from already-unlocked games (0..currentIdx) with r3 weighted 3x
+    const pool = [];
+    for (let i = 0; i <= currentIdx; i++) {
+      pool.push(rewards[i]);
+      if (rewards[i].id === 'r3') pool.push(rewards[i], rewards[i]);
+    }
+    const reward = pool[Math.floor(Math.random() * pool.length)];
     setCurrentReward(reward);
     startRewardTimer(appState.rewardDuration || 120);
-  }, [appState.rewardDuration, startRewardTimer]);
+  }, [appState.currentGameIndex, appState.rewardDuration, startRewardTimer]);
 
   // ── Profile management ────────────────────────────────────────────────────────
   const addSibling = useCallback(() => {
@@ -439,7 +446,7 @@ export default function App() {
       </div>
 
       {/* Header */}
-      <Header appState={appState} tick={tick} />
+      <Header appState={appState} tick={tick} subtitle={subtitle} />
 
       {/* Mode toggle + Profile selector */}
       <div className="max-w-4xl mx-auto w-full px-4 mb-4 z-10 relative text-slate-800">
@@ -545,7 +552,7 @@ export default function App() {
         <SuccessModal
           reward={currentReward}
           rewardTimeLeft={rewardTimeLeft}
-          unlockedCount={appState.unlockedGames.length}
+          unlockedCount={Math.min((appState.currentGameIndex ?? 0) + 1, 10)}
           isPlayingBeat={isPlayingBeat}
           currentTrackIndex={currentTrackIndex}
           finalTimes={finalTimes}

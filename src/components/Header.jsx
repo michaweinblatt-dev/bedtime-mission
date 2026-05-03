@@ -1,7 +1,7 @@
 import { User } from 'lucide-react';
 import { formatTime, getElapsed } from '../utils/helpers';
 
-export default function Header({ appState, tick }) {
+export default function Header({ appState, tick, subtitle }) {
   const isShared = appState.activeProfileId === 'shared';
   const p = appState.profiles[appState.activeProfileId];
   if (!p) return null;
@@ -31,8 +31,7 @@ export default function Header({ appState, tick }) {
         {title}
       </h1>
       <p className="text-indigo-200 text-sm md:text-base font-bold tracking-wide text-center text-slate-100">
-        Complete your mission to unlock tonight&apos;s{' '}
-        <span className="text-pink-400 font-black">Secret Parent Game!</span>
+        {subtitle}
       </p>
 
       {/* Mission timer */}

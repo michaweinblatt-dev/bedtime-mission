@@ -1,6 +1,7 @@
-import { Zap, RefreshCw, Play, Square, Loader2, AlertCircle, Moon } from 'lucide-react';
+import { useState } from 'react';
+import { Zap, RefreshCw, Play, Square, Moon } from 'lucide-react';
 import { formatTime } from '../utils/helpers';
-import { SPACE_DJ_PLAYLIST } from '../utils/constants';
+import { SPACE_DJ_PLAYLIST, HANDOFF_LINES } from '../utils/constants';
 
 export default function SuccessModal({
   reward,
@@ -16,6 +17,8 @@ export default function SuccessModal({
   onShowStats,
   onSleepMode,
 }) {
+  const [handoffLine] = useState(() => HANDOFF_LINES[Math.floor(Math.random() * HANDOFF_LINES.length)]);
+
   const showMusic = reward.title.includes('Dance') || reward.title.includes('DJ');
 
   function BeatButton() {
@@ -48,6 +51,11 @@ export default function SuccessModal({
           <Zap className="w-5 h-5 text-emerald-500" />
           <h2 className="text-xl font-black text-slate-400 uppercase tracking-widest">Mission Success</h2>
         </div>
+
+        {/* Handoff line */}
+        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-pink-500 mb-4">
+          {handoffLine}
+        </p>
 
         {/* Prize card */}
         <div className="bg-gradient-to-b from-indigo-600 to-indigo-800 rounded-[32px] p-6 relative shadow-xl text-white mb-6 flex-grow flex flex-col justify-center border-4 border-indigo-400">
