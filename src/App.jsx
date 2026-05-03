@@ -13,6 +13,7 @@ import SuccessModal from './components/SuccessModal';
 import SleepMode from './components/SleepMode';
 import StatsModal from './components/StatsModal';
 import CustomModal from './components/CustomModal';
+import InstallPrompt from './components/InstallPrompt';
 
 function loadPersistedState() {
   try {
@@ -578,6 +579,8 @@ export default function App() {
           playCameraSound={playCameraSound}
         />
       )}
+
+      <InstallPrompt />
     </div>
   );
 }
