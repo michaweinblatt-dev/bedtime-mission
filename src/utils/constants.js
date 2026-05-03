@@ -1,4 +1,4 @@
-export const STORAGE_KEY = 'bedtime_v29_final_sync';
+export const STORAGE_KEY = 'bedtime_v30';
 
 export const MAIN_SUBTITLES = [
   "Complete your missions to unlock tonight's parent challenge.",

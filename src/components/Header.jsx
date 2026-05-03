@@ -34,10 +34,6 @@ export default function Header({ appState, tick, subtitle }) {
         {subtitle}
       </p>
 
-      <p className="mt-2 text-[11px] text-indigo-400/60 text-center whitespace-nowrap overflow-hidden text-ellipsis">
-        Basics &rarr; Tonight&apos;s Game &rarr; Read &amp; Time for Sleep 🌙
-      </p>
-
       {/* Mission timer */}
       <div
         className={`inline-block mt-4 px-6 py-2 rounded-full bg-slate-800/50 border border-indigo-500/30 text-indigo-300 font-mono text-2xl shadow-inner mb-2 transition-opacity ${showTimer ? 'opacity-100' : 'opacity-0'}`}
