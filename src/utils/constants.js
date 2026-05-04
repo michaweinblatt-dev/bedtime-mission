@@ -8,9 +8,9 @@ export const MAIN_SUBTITLES = [
 ];
 
 export const HANDOFF_LINES = [
-  "Hand this to a parent. Their turn now.",
+  "Parents: your turn 👇",
   "Mission complete. Parents: read your orders.",
-  "Kid-stronauts: your work here is done. Parents: you're up.",
+  "Hand this to a parent.",
 ];
 
 export const SPACE_DJ_PLAYLIST = [

@@ -6,7 +6,6 @@ import { SPACE_DJ_PLAYLIST, HANDOFF_LINES } from '../utils/constants';
 export default function SuccessModal({
   reward,
   rewardTimeLeft,
-  unlockedCount,
   nightNumber,
   isPlayingBeat,
   currentTrackIndex,
@@ -54,22 +53,15 @@ export default function SuccessModal({
         </div>
 
         {/* Handoff line */}
-        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-pink-500 mb-4">
+        <p className="text-sm text-slate-400 mb-4">
           {handoffLine}
         </p>
 
         {/* Prize card */}
-        <div className="bg-gradient-to-b from-indigo-600 to-indigo-800 rounded-[32px] p-6 relative shadow-xl text-white mb-6 flex-grow flex flex-col justify-center border-4 border-indigo-400">
-          <div className="bg-yellow-400 text-yellow-950 text-[11px] font-black uppercase tracking-[0.2em] py-2 px-6 rounded-full absolute -top-4 left-1/2 -translate-x-1/2 shadow-lg border-2 border-white whitespace-nowrap">
-            Tonight&apos;s Prize Game
-          </div>
-
-          <div className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300 opacity-80 text-center">
-            Collection: {unlockedCount} of 10 Unlocked
-          </div>
-          <div className="mb-3 text-[9px] font-bold uppercase tracking-widest text-indigo-400/50 text-center">
-            Night {nightNumber} of 10
-          </div>
+        <div className="bg-gradient-to-b from-indigo-600 to-indigo-800 rounded-[32px] p-6 shadow-xl text-white mb-6 flex-grow flex flex-col justify-center border-4 border-indigo-400">
+          <p className="text-xs text-indigo-300/60 mb-3 text-center">
+            Night {nightNumber} of 10 · {nightNumber} unlocked
+          </p>
 
           <p className="text-2xl sm:text-3xl font-black mb-4 leading-tight drop-shadow-md uppercase text-white">
             {reward.title}

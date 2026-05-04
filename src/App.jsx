@@ -651,7 +651,6 @@ export default function App() {
         <SuccessModal
           reward={currentReward}
           rewardTimeLeft={rewardTimeLeft}
-          unlockedCount={Math.min((appState.currentGameIndex ?? 0) + 1, 10)}
           nightNumber={(appState.currentGameIndex ?? 0) + 1}
           isPlayingBeat={isPlayingBeat}
           currentTrackIndex={currentTrackIndex}
