@@ -1,9 +1,29 @@
 import { useState, useEffect } from 'react';
 import { Moon } from 'lucide-react';
+import { track } from '../utils/analytics';
 
 export default function SleepMode({ onReset }) {
   const [phase, setPhase] = useState('transition'); // 'transition' | 'breathe'
   const [inhale, setInhale] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    track('share_tapped');
+    const shareData = {
+      title: 'Bedtime Mission',
+      text: "We've been using this app for bedtime and our kids are obsessed 🚀 You complete a checklist then unlock a silly parent game — totally changed our bedtime routine. Try it:",
+      url: 'https://bedtimemission.com',
+    };
+    if (navigator.share) {
+      try { await navigator.share(shareData); } catch {}
+    } else {
+      try {
+        await navigator.clipboard.writeText('https://bedtimemission.com');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {}
+    }
+  };
 
   // After 2.5s warm message, fade into breathing animation
   useEffect(() => {
@@ -51,6 +71,13 @@ export default function SleepMode({ onReset }) {
         <p className="text-2xl font-bold text-indigo-300 mb-12 text-center">
           {inhale ? 'Inhale...' : 'Exhale...'}
         </p>
+
+        <button
+          onClick={handleShare}
+          className="border border-indigo-400/50 text-indigo-300 hover:text-white hover:border-indigo-300 font-bold text-xs uppercase tracking-[0.2em] px-6 py-2 rounded-full transition-colors block mx-auto text-center mb-4"
+        >
+          {copied ? 'Link copied!' : 'Share with a friend 🚀'}
+        </button>
 
         <button
           onClick={onReset}

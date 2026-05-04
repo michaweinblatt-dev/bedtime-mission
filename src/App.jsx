@@ -45,6 +45,7 @@ export default function App() {
   const [waitingMessage, setWaitingMessage] = useState(null);
   const [tick, setTick] = useState(0); // increments every second to drive timer display
   const [subtitle] = useState(() => MAIN_SUBTITLES[Math.floor(Math.random() * MAIN_SUBTITLES.length)]);
+  const [compFinishModal, setCompFinishModal] = useState(null); // { name, time, waiting: [] }
 
   const rewardTimerRef = useRef(null);
   const currentAudioRef = useRef(null);
@@ -244,6 +245,12 @@ export default function App() {
             .filter(id => !nextState.profiles[id].tasks.every(t => t.done))
             .map(id => nextState.profiles[id].name);
           setWaitingMessage(`Waiting for: ${waiting.join(', ')}`);
+          const finishedProfile = nextState.profiles[appState.activeProfileId];
+          setCompFinishModal({
+            name: finishedProfile.name,
+            time: formatTime(getElapsed(finishedProfile)),
+            waiting,
+          });
           saveAppState(nextState);
         }
       } else {
@@ -587,6 +594,30 @@ export default function App() {
         >
           Done ✓
         </button>
+      )}
+
+      {/* Competition individual finish modal */}
+      {compFinishModal && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/60">
+          <div className="bg-indigo-950 border border-indigo-500/40 rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <div className="text-5xl mb-4">🏆</div>
+            <h2 className="text-2xl font-black text-white mb-1 uppercase tracking-tight">
+              {compFinishModal.name} finished!
+            </h2>
+            <p className="text-indigo-300 text-lg font-bold mb-6">
+              {compFinishModal.time}
+            </p>
+            <p className="text-pink-400 font-black text-sm uppercase tracking-widest mb-8">
+              Now cheer on {compFinishModal.waiting.join(' & ')}! 🎉
+            </p>
+            <button
+              onClick={() => setCompFinishModal(null)}
+              className="bg-indigo-500 hover:bg-indigo-400 active:scale-95 text-white font-black px-8 py-3 rounded-full transition-all w-full"
+            >
+              Let's go!
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Overlays / Modals */}
