@@ -8,14 +8,16 @@ export const MAIN_SUBTITLES = [
 ];
 
 export const HANDOFF_LINES = [
-  "Parents: your turn 👇",
-  "Mission complete. Parents: read your orders.",
-  "Hand this to a parent.",
+  "Your turn, Mom & Dad. 🎯",
+  "Kids: you crushed it. Parents: deliver. 🎯",
+  "The kids held up their end. Parents: show them how it's done.",
+  "Kid-stronauts: mission complete. Parents: time to shine. ⭐",
+  "Astronauts earned it. Parents: you're on. 🚀",
 ];
 
 export const SPACE_DJ_PLAYLIST = [
-  { id: 0, name: 'Rocket Pajama Party', url: 'https://raw.githubusercontent.com/michaweinblatt-dev/bedtime-mission/main/Rocket.mp3' },
-  { id: 1, name: 'Moonboot Dance Party', url: 'https://raw.githubusercontent.com/michaweinblatt-dev/bedtime-mission/main/moonbot.mp3' },
+  { id: 0, name: 'Rocket Pajama Party', url: '/Rocket.mp3' },
+  { id: 1, name: 'Moonboot Dance Party', url: '/moonbot.mp3' },
 ];
 
 export function getDefaultTasks() {
