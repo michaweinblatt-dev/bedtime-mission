@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { CloudUpload, Palette, User, Plus } from 'lucide-react';
 
-import { STORAGE_KEY, SPACE_DJ_PLAYLIST, getDefaultTasks, getRewards, getDefaultAppState, MAIN_SUBTITLES } from './utils/constants';
+import { STORAGE_KEY, GAME_INDEX_KEY, SPACE_DJ_PLAYLIST, getDefaultTasks, getRewards, getDefaultAppState, MAIN_SUBTITLES } from './utils/constants';
 import { formatTime, getElapsed } from './utils/helpers';
 import { track } from './utils/analytics';
 import { useAudio } from './hooks/useAudio';
@@ -24,6 +24,9 @@ function loadPersistedState() {
       if (!s.usageHistory) s.usageHistory = [];
       if (!s.unlockedGames) s.unlockedGames = [];
       if (s.currentGameIndex === undefined) s.currentGameIndex = 0;
+      // Prefer the separate family-wide key (source of truth)
+      const familyIdx = localStorage.getItem(GAME_INDEX_KEY);
+      if (familyIdx !== null) s.currentGameIndex = parseInt(familyIdx, 10) || 0;
       return s;
     }
   } catch {}
@@ -284,6 +287,7 @@ export default function App() {
     stopLullaby();
     track('day_reset');
     const nextGameIndex = ((appState.currentGameIndex ?? 0) + 1) % 10;
+    localStorage.setItem(GAME_INDEX_KEY, String(nextGameIndex));
     const next = { ...appState, profiles, currentGameIndex: nextGameIndex };
     saveAppState(next);
     setShowSleepMode(false);
@@ -363,18 +367,17 @@ export default function App() {
   // ── Reward spinning ───────────────────────────────────────────────────────────
   const respinReward = useCallback(() => {
     const rewards = getRewards();
-    const currentIdx = appState.currentGameIndex ?? 0;
-    // Build pool from already-unlocked games (0..currentIdx) with r3 weighted 3x
+    // All 10 games are available, r3 gets 3x weight
     const pool = [];
-    for (let i = 0; i <= currentIdx; i++) {
-      pool.push(rewards[i]);
-      if (rewards[i].id === 'r3') pool.push(rewards[i], rewards[i]);
+    for (const r of rewards) {
+      pool.push(r);
+      if (r.id === 'r3') pool.push(r, r);
     }
     const reward = pool[Math.floor(Math.random() * pool.length)];
     track('game_spun', { game_shown: reward.title });
     setCurrentReward(reward);
     startRewardTimer(appState.rewardDuration || 120);
-  }, [appState.currentGameIndex, appState.rewardDuration, startRewardTimer]);
+  }, [appState.rewardDuration, startRewardTimer]);
 
   // ── Profile management ────────────────────────────────────────────────────────
   const addSibling = useCallback(() => {
@@ -649,6 +652,7 @@ export default function App() {
           reward={currentReward}
           rewardTimeLeft={rewardTimeLeft}
           unlockedCount={Math.min((appState.currentGameIndex ?? 0) + 1, 10)}
+          nightNumber={(appState.currentGameIndex ?? 0) + 1}
           isPlayingBeat={isPlayingBeat}
           currentTrackIndex={currentTrackIndex}
           finalTimes={finalTimes}

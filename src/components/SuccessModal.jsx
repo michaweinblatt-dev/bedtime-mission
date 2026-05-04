@@ -7,6 +7,7 @@ export default function SuccessModal({
   reward,
   rewardTimeLeft,
   unlockedCount,
+  nightNumber,
   isPlayingBeat,
   currentTrackIndex,
   finalTimes,
@@ -63,8 +64,11 @@ export default function SuccessModal({
             Tonight&apos;s Prize Game
           </div>
 
-          <div className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300 opacity-80 text-center">
+          <div className="mb-1 text-[10px] font-black uppercase tracking-[0.2em] text-indigo-300 opacity-80 text-center">
             Collection: {unlockedCount} of 10 Unlocked
+          </div>
+          <div className="mb-3 text-[9px] font-bold uppercase tracking-widest text-indigo-400/50 text-center">
+            Night {nightNumber} of 10
           </div>
 
           <p className="text-2xl sm:text-3xl font-black mb-4 leading-tight drop-shadow-md uppercase text-white">

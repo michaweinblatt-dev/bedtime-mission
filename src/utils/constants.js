@@ -1,4 +1,5 @@
 export const STORAGE_KEY = 'bedtime_v30';
+export const GAME_INDEX_KEY = 'bedtime_gameIndex';
 
 export const MAIN_SUBTITLES = [
   "Complete your missions to unlock tonight's parent challenge.",
