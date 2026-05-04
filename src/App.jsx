@@ -49,6 +49,8 @@ export default function App() {
   const rewardTimerRef = useRef(null);
   const currentAudioRef = useRef(null);
   const startSleepModeRef = useRef(null);
+  const editBtnRef = useRef(null);
+  const [pulseEditBtn, setPulseEditBtn] = useState(false);
 
   const { unlockAudio, playRocketSound, playSuccessSound, playLullaby, stopLullaby, playCameraSound } = useAudio();
 
@@ -430,7 +432,16 @@ export default function App() {
       type: 'prompt',
       title: 'Add Mission',
       confirmText: 'Add',
-      onConfirm: (title) => { addTask(title); setModalConfig(null); },
+      onConfirm: (title) => {
+        addTask(title);
+        setModalConfig(null);
+        // Give React one tick to render the new task, then scroll to the Done button and pulse it
+        setTimeout(() => {
+          editBtnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setPulseEditBtn(true);
+          setTimeout(() => setPulseEditBtn(false), 2000);
+        }, 150);
+      },
       onCancel: () => setModalConfig(null),
     });
   }, [addTask]);
@@ -557,8 +568,9 @@ export default function App() {
       {/* Footer */}
       <div className="mt-auto py-8 flex flex-col items-center gap-4 z-10 relative">
         <button
+          ref={editBtnRef}
           onClick={toggleEditMode}
-          className="text-indigo-400 hover:text-white text-sm flex items-center gap-2 transition-colors bg-slate-800/50 px-6 py-3 rounded-full border border-indigo-500/20 shadow-lg"
+          className={`text-indigo-400 hover:text-white text-sm flex items-center gap-2 transition-colors bg-slate-800/50 px-6 py-3 rounded-full border border-indigo-500/20 shadow-lg ${pulseEditBtn ? 'animate-pulse' : ''}`}
         >
           <Palette className={`w-4 h-4 ${isEditMode ? 'text-pink-400' : 'text-indigo-400'}`} />
           <span className={`font-black ${isEditMode ? 'text-pink-400' : 'text-indigo-400'}`}>
@@ -566,6 +578,16 @@ export default function App() {
           </span>
         </button>
       </div>
+
+      {/* Floating Done button — always visible at bottom of screen in edit mode */}
+      {isEditMode && (
+        <button
+          onClick={toggleEditMode}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-black px-8 py-3 rounded-full shadow-xl transition-all"
+        >
+          Done ✓
+        </button>
+      )}
 
       {/* Overlays / Modals */}
       {showSuccess && currentReward && (
