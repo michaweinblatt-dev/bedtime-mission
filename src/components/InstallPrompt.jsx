@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { track } from '../utils/analytics';
 
 const DISMISSED_KEY = 'pwa_install_dismissed';
 
@@ -45,8 +46,9 @@ export default function InstallPrompt() {
   const handleInstall = async () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
-    await deferredPrompt.userChoice;
+    const { outcome } = await deferredPrompt.userChoice;
     setDeferredPrompt(null);
+    if (outcome === 'accepted') track('pwa_installed');
     dismiss();
   };
 

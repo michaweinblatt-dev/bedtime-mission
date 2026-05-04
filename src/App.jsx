@@ -4,6 +4,7 @@ import { CloudUpload, Palette, User, Plus } from 'lucide-react';
 
 import { STORAGE_KEY, SPACE_DJ_PLAYLIST, getDefaultTasks, getRewards, getDefaultAppState, MAIN_SUBTITLES } from './utils/constants';
 import { formatTime, getElapsed } from './utils/helpers';
+import { track } from './utils/analytics';
 import { useAudio } from './hooks/useAudio';
 
 import Header from './components/Header';
@@ -65,7 +66,7 @@ export default function App() {
   const activeProfile = appState.profiles[appState.activeProfileId];
 
   // ── Sleep mode ──────────────────────────────────────────────────────────────
-  const startSleepMode = useCallback(() => {
+  const startSleepMode = useCallback((triggeredBy = 'button') => {
     if (rewardTimerRef.current) clearInterval(rewardTimerRef.current);
     setShowSuccess(false);
     setShowSleepMode(true);
@@ -75,6 +76,7 @@ export default function App() {
       setIsPlayingBeat(false);
     }
     playLullaby();
+    track('sleep_mode_triggered', { triggered_by: triggeredBy });
   }, [playLullaby]);
 
   // Keep a stable ref so the reward timer interval can call it
@@ -88,7 +90,7 @@ export default function App() {
       setRewardTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(rewardTimerRef.current);
-          setTimeout(() => startSleepModeRef.current?.(), 0);
+          setTimeout(() => startSleepModeRef.current?.('timer'), 0);
           return 0;
         }
         return prev - 1;
@@ -162,6 +164,11 @@ export default function App() {
       usageHistory: [...(stateSnapshot.usageHistory || []), log],
     };
 
+    track('mission_completed', {
+      game_shown: reward.title,
+      elapsed_seconds: Math.round(log.players[0]?.time ?? 0),
+      game_mode: stateSnapshot.gameMode,
+    });
     saveAppState(finalState);
     setFinalTimes(times);
     setCurrentReward(reward);
@@ -200,6 +207,13 @@ export default function App() {
     if (newDoneCount > prevDoneCount) {
       playRocketSound(newDoneCount, tasks.length);
       confetti({ particleCount: 30, spread: 50, origin: { y: 0.8 } });
+      const completedTask = tasks.find(t => t.id === taskId);
+      track('task_completed', {
+        task_id: taskId,
+        task_title: completedTask?.title,
+        tasks_done: newDoneCount,
+        tasks_total: tasks.length,
+      });
     }
 
     const updatedProfile = {
@@ -259,6 +273,7 @@ export default function App() {
     }
     if (rewardTimerRef.current) clearInterval(rewardTimerRef.current);
     stopLullaby();
+    track('day_reset');
     const nextGameIndex = ((appState.currentGameIndex ?? 0) + 1) % 10;
     const next = { ...appState, profiles, currentGameIndex: nextGameIndex };
     saveAppState(next);
@@ -277,6 +292,7 @@ export default function App() {
         ? sibs[0]
         : appState.activeProfileId;
     saveAppState({ ...appState, gameMode: mode, activeProfileId: newActiveId });
+    track('mode_changed', { mode });
   }, [appState, saveAppState]);
 
   const switchProfile = useCallback((id) => {
@@ -346,6 +362,7 @@ export default function App() {
       if (rewards[i].id === 'r3') pool.push(rewards[i], rewards[i]);
     }
     const reward = pool[Math.floor(Math.random() * pool.length)];
+    track('game_spun', { game_shown: reward.title });
     setCurrentReward(reward);
     startRewardTimer(appState.rewardDuration || 120);
   }, [appState.currentGameIndex, appState.rewardDuration, startRewardTimer]);
@@ -369,6 +386,8 @@ export default function App() {
           activeProfileId: id,
         };
         saveAppState(next);
+        const totalProfiles = Object.keys(next.profiles).filter(k => k !== 'shared').length;
+        track('astronaut_added', { total_profiles: totalProfiles });
         setModalConfig(null);
       },
       onCancel: () => setModalConfig(null),
