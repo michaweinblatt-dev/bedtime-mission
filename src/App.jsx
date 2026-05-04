@@ -453,6 +453,21 @@ export default function App() {
     });
   }, [addTask]);
 
+  const resetToDefaults = useCallback(() => {
+    setModalConfig({
+      type: 'confirm',
+      title: 'Reset to defaults?',
+      message: 'This will replace your current tasks with the default 6. Are you sure?',
+      confirmText: 'Reset',
+      onConfirm: () => {
+        const p = { ...appState.profiles[appState.activeProfileId], tasks: getDefaultTasks() };
+        saveAppState({ ...appState, profiles: { ...appState.profiles, [appState.activeProfileId]: p } });
+        setModalConfig(null);
+      },
+      onCancel: () => setModalConfig(null),
+    });
+  }, [appState, saveAppState]);
+
   const showCloudBackup = useCallback(() => {
     setModalConfig({
       type: 'message',
@@ -574,6 +589,14 @@ export default function App() {
 
       {/* Footer */}
       <div className="mt-auto py-8 flex flex-col items-center gap-4 z-10 relative">
+        {isEditMode && (
+          <button
+            onClick={resetToDefaults}
+            className="text-indigo-500 hover:text-indigo-300 text-xs underline underline-offset-2 transition-colors"
+          >
+            Reset to default tasks
+          </button>
+        )}
         <button
           ref={editBtnRef}
           onClick={toggleEditMode}
