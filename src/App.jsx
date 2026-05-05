@@ -17,6 +17,7 @@ import SleepMode from './components/SleepMode';
 import StatsModal from './components/StatsModal';
 import CustomModal from './components/CustomModal';
 import InstallPrompt from './components/InstallPrompt';
+import OnboardingOverlay, { ONBOARDING_KEY } from './components/OnboardingOverlay';
 
 function loadPersistedState() {
   try {
@@ -51,6 +52,7 @@ export default function App() {
   const [tick, setTick] = useState(0); // increments every second to drive timer display
   const [subtitle] = useState(() => MAIN_SUBTITLES[Math.floor(Math.random() * MAIN_SUBTITLES.length)]);
   const [compFinishModal, setCompFinishModal] = useState(null); // { name, time, waiting: [] }
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
 
   const rewardTimerRef = useRef(null);
   const currentAudioRef = useRef(null);
@@ -701,6 +703,13 @@ export default function App() {
       )}
 
       <InstallPrompt />
+
+      {showOnboarding && (
+        <OnboardingOverlay onDismiss={() => {
+          localStorage.setItem(ONBOARDING_KEY, 'true');
+          setShowOnboarding(false);
+        }} />
+      )}
     </div>
   );
 }
