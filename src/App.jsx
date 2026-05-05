@@ -586,19 +586,18 @@ export default function App() {
       <ProgressBar tasks={activeProfile?.tasks || []} />
 
       {/* Task grid */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <main className="max-w-4xl mx-auto w-full px-4 pb-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-grow z-10 relative">
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext items={(activeProfile?.tasks || []).map(t => t.id)} strategy={rectSortingStrategy}>
-            {(activeProfile?.tasks || []).map(task => (
-              <TaskCard
-                key={task.id}
-                task={task}
-                isEditMode={isEditMode}
-                onAction={() => isEditMode ? removeTask(task.id) : toggleTask(task.id)}
-              />
-            ))}
-          </SortableContext>
-        </DndContext>
+        <SortableContext items={(activeProfile?.tasks || []).map(t => t.id)} strategy={rectSortingStrategy}>
+          {(activeProfile?.tasks || []).map(task => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              isEditMode={isEditMode}
+              onAction={() => isEditMode ? removeTask(task.id) : toggleTask(task.id)}
+            />
+          ))}
+        </SortableContext>
         {isEditMode && (
           <div
             onClick={promptNewTask}
@@ -613,6 +612,7 @@ export default function App() {
           </div>
         )}
       </main>
+      </DndContext>
 
       {/* Footer */}
       <div className="mt-auto py-8 flex flex-col items-center gap-4 z-10 relative">
