@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
 import { CloudUpload, Palette, User, Plus } from 'lucide-react';
+import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 
 import { STORAGE_KEY, GAME_INDEX_KEY, SPACE_DJ_PLAYLIST, getDefaultTasks, getRewards, getDefaultAppState, MAIN_SUBTITLES } from './utils/constants';
 import { formatTime, getElapsed } from './utils/helpers';
@@ -379,6 +381,22 @@ export default function App() {
     startRewardTimer(appState.rewardDuration || 120);
   }, [appState.rewardDuration, startRewardTimer]);
 
+  // ── Drag-to-reorder ───────────────────────────────────────────────────────────
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+  );
+
+  const handleDragEnd = useCallback(({ active, over }) => {
+    if (!over || active.id === over.id) return;
+    const profile = appState.profiles[appState.activeProfileId];
+    const oldIdx = profile.tasks.findIndex(t => t.id === active.id);
+    const newIdx = profile.tasks.findIndex(t => t.id === over.id);
+    if (oldIdx === -1 || newIdx === -1) return;
+    const updatedProfile = { ...profile, tasks: arrayMove(profile.tasks, oldIdx, newIdx) };
+    saveAppState({ ...appState, profiles: { ...appState.profiles, [appState.activeProfileId]: updatedProfile } });
+  }, [appState, saveAppState]);
+
   // ── Profile management ────────────────────────────────────────────────────────
   const addSibling = useCallback(() => {
     setModalConfig({
@@ -567,14 +585,18 @@ export default function App() {
 
       {/* Task grid */}
       <main className="max-w-4xl mx-auto w-full px-4 pb-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-grow z-10 relative">
-        {(activeProfile?.tasks || []).map(task => (
-          <TaskCard
-            key={task.id}
-            task={task}
-            isEditMode={isEditMode}
-            onAction={() => isEditMode ? removeTask(task.id) : toggleTask(task.id)}
-          />
-        ))}
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={(activeProfile?.tasks || []).map(t => t.id)} strategy={rectSortingStrategy}>
+            {(activeProfile?.tasks || []).map(task => (
+              <TaskCard
+                key={task.id}
+                task={task}
+                isEditMode={isEditMode}
+                onAction={() => isEditMode ? removeTask(task.id) : toggleTask(task.id)}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
         {isEditMode && (
           <div
             onClick={promptNewTask}
