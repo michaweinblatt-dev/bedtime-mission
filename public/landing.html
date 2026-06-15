@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bedtime Mission — The bedtime routine kids actually want to do.</title>
+  <meta name="description" content="Turn bedtime battles into a game — with a silly parent-led challenge as the reward. No account needed. Just open and go." />
+  <meta name="theme-color" content="#1e1b4b" />
+  <meta property="og:title" content="Bedtime Mission" />
+  <meta property="og:description" content="Turn bedtime battles into a game — with a silly parent-led challenge as the reward." />
+  <meta property="og:url" content="https://bedtimemission.com" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(160deg, #1e1b4b 0%, #312e81 40%, #1e1b4b 100%);
+      min-height: 100vh;
+      color: #fff;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────── */
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    section { padding: 72px 0; }
+
+    /* ── Nav ─────────────────────────────────────────────────── */
+    nav {
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .nav-logo {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #a5b4fc;
+    }
+
+    .nav-cta {
+      background: #4f46e5;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 10px 20px;
+      border-radius: 999px;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .nav-cta:hover { background: #6366f1; }
+
+    /* ── Hero ────────────────────────────────────────────────── */
+    .hero {
+      padding: 56px 0 64px;
+      text-align: center;
+    }
+
+    .hero-eyebrow {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #a5b4fc;
+      margin-bottom: 20px;
+    }
+
+    .hero-headline {
+      font-size: clamp(36px, 8vw, 58px);
+      font-weight: 900;
+      line-height: 1.08;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #f9a8d4, #c4b5fd, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-body {
+      font-size: 18px;
+      font-weight: 500;
+      line-height: 1.6;
+      color: #c7d2fe;
+      max-width: 480px;
+      margin: 0 auto 36px;
+    }
+
+    .cta-btn {
+      display: inline-block;
+      background: #4f46e5;
+      color: #fff;
+      font-size: 17px;
+      font-weight: 900;
+      padding: 18px 40px;
+      border-radius: 999px;
+      text-decoration: none;
+      letter-spacing: 0.02em;
+      box-shadow: 0 8px 32px rgba(99, 102, 241, 0.45);
+      transition: background 0.15s, transform 0.1s;
+    }
+    .cta-btn:hover { background: #6366f1; transform: translateY(-1px); }
+    .cta-btn:active { transform: scale(0.97); }
+
+    .cta-subtext {
+      margin-top: 14px;
+      font-size: 13px;
+      color: #818cf8;
+      font-weight: 500;
+    }
+
+    /* ── How it works ────────────────────────────────────────── */
+    .section-label {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #818cf8;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: clamp(26px, 5vw, 36px);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.01em;
+      text-align: center;
+      margin-bottom: 48px;
+      color: #fff;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 20px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(165,180,252,0.15);
+      border-radius: 20px;
+      padding: 24px;
+    }
+
+    .step-icon {
+      font-size: 28px;
+      flex-shrink: 0;
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .step-title {
+      font-size: 16px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #e0e7ff;
+      margin-bottom: 6px;
+    }
+
+    .step-body {
+      font-size: 15px;
+      font-weight: 500;
+      color: #a5b4fc;
+      line-height: 1.5;
+    }
+
+    /* ── Game cards ──────────────────────────────────────────── */
+    .cards {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(165,180,252,0.2);
+      border-radius: 20px;
+      padding: 22px 24px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .card-body {
+      font-size: 14px;
+      font-weight: 500;
+      color: #a5b4fc;
+      line-height: 1.5;
+    }
+
+    .cards-tagline {
+      text-align: center;
+      margin-top: 32px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #c4b5fd;
+      font-style: italic;
+    }
+
+    /* ── Built by ────────────────────────────────────────────── */
+    .built-by {
+      text-align: center;
+      padding: 56px 0;
+    }
+
+    .built-by p {
+      font-size: 16px;
+      font-weight: 500;
+      line-height: 1.7;
+      color: #a5b4fc;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ── Footer CTA ──────────────────────────────────────────── */
+    .footer-cta {
+      text-align: center;
+      padding: 64px 0 24px;
+      border-top: 1px solid rgba(165,180,252,0.12);
+    }
+
+    .footer-cta-headline {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #818cf8;
+      margin-bottom: 24px;
+    }
+
+    .footer-subtext {
+      margin-top: 20px;
+      font-size: 13px;
+      color: #6366f1;
+      font-weight: 500;
+    }
+
+    .footer-copy {
+      margin-top: 48px;
+      padding-bottom: 32px;
+      font-size: 12px;
+      color: #3730a3;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    /* ── Divider ─────────────────────────────────────────────── */
+    .divider {
+      border: none;
+      border-top: 1px solid rgba(165,180,252,0.1);
+      margin: 0;
+    }
+
+    /* ── Responsive ──────────────────────────────────────────── */
+    @media (min-width: 540px) {
+      .cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .cards .card:last-child {
+        grid-column: 1 / -1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav>
+    <span class="nav-logo">🚀 Bedtime Mission</span>
+    <a href="/app" class="nav-cta">Open App →</a>
+  </nav>
+
+  <!-- Hero -->
+  <div class="container">
+    <div class="hero">
+      <p class="hero-eyebrow">Bedtime, but make it fun.</p>
+      <h1 class="hero-headline">The bedtime routine kids actually want&nbsp;to&nbsp;do.</h1>
+      <p class="hero-body">Turn bedtime battles into a game — with a silly parent-led challenge as the reward.</p>
+      <a href="/app" class="cta-btn">Start your first mission →</a>
+      <p class="cta-subtext">No account needed. Just open and go.</p>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- How it works -->
+  <div class="container">
+    <section>
+      <p class="section-label">Here's how it works</p>
+      <h2 class="section-title">Tap along as you go.</h2>
+      <div class="steps">
+        <div class="step">
+          <span class="step-icon">✓</span>
+          <div>
+            <p class="step-title">Check off your missions</p>
+            <p class="step-body">Brush teeth, pajamas, the whole routine — check them off as you go.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-icon">🎮</span>
+          <div>
+            <p class="step-title">Unlock tonight's parent game</p>
+            <p class="step-body">A surprise challenge appears when all missions are complete.</p>
+          </div>
+        </div>
+        <div class="step">
+          <span class="step-icon">🚀</span>
+          <div>
+            <p class="step-title">Parents perform</p>
+            <p class="step-body">Pillow fights, dance parties, freeze tag — phone goes in your pocket.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- The games -->
+  <div class="container">
+    <section>
+      <p class="section-label">The reward</p>
+      <h2 class="section-title">Tonight's challenges</h2>
+      <div class="cards">
+        <div class="card">
+          <p class="card-title">Pillow Fight! 🛏️</p>
+          <p class="card-body">Grab your pillows. You know what to do.</p>
+        </div>
+        <div class="card">
+          <p class="card-title">Impromptu DJ Dance Party 🎵</p>
+          <p class="card-body">One minute of wild dancing. Kid picks the track.</p>
+        </div>
+        <div class="card">
+          <p class="card-title">Freeze Un-Freeze 🧊</p>
+          <p class="card-body">Speaks for itself.</p>
+        </div>
+      </div>
+      <p class="cards-tagline">"The reward isn't more screen time. It's you."</p>
+    </section>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Built by -->
+  <div class="container">
+    <div class="built-by">
+      <p>Vibe coded by a dad and his 8-year-old who wanted bedtime to feel less like a battle and more like Bluey.</p>
+    </div>
+  </div>
+
+  <hr class="divider" />
+
+  <!-- Footer CTA -->
+  <div class="container">
+    <div class="footer-cta">
+      <p class="footer-cta-headline">Ready to try it?</p>
+      <a href="/app" class="cta-btn">Start your first mission →</a>
+      <p class="footer-subtext">No setup. No account. Just open and go.</p>
+    </div>
+    <p class="footer-copy">© Bedtime Mission 2025</p>
+  </div>
+
+</body>
+</html>
