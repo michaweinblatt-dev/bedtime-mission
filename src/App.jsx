@@ -4,7 +4,7 @@ import { CloudUpload, Palette, User, Plus } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 
-import { STORAGE_KEY, GAME_INDEX_KEY, SPACE_DJ_PLAYLIST, getDefaultTasks, getRewards, getDefaultAppState, MAIN_SUBTITLES } from './utils/constants';
+import { STORAGE_KEY, GAME_INDEX_KEY, APP_MODE_KEY, MORNING_GAME_INDEX_KEY, SPACE_DJ_PLAYLIST, getDefaultTasks, getDefaultMorningTasks, getRewards, getMorningRewards, getDefaultAppState, MAIN_SUBTITLES, MORNING_SUBTITLES } from './utils/constants';
 import { formatTime, getElapsed } from './utils/helpers';
 import { track } from './utils/analytics';
 import { useAudio } from './hooks/useAudio';
@@ -19,6 +19,16 @@ import CustomModal from './components/CustomModal';
 import InstallPrompt from './components/InstallPrompt';
 import OnboardingOverlay, { ONBOARDING_KEY } from './components/OnboardingOverlay';
 
+function getProfileTasks(profile, appMode) {
+  return appMode === 'morning' ? (profile.morningTasks || getDefaultMorningTasks()) : profile.tasks;
+}
+
+function setProfileTasks(profile, appMode, tasks) {
+  return appMode === 'morning'
+    ? { ...profile, morningTasks: tasks }
+    : { ...profile, tasks };
+}
+
 function loadPersistedState() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -30,6 +40,15 @@ function loadPersistedState() {
       // Prefer the separate family-wide key (source of truth)
       const familyIdx = localStorage.getItem(GAME_INDEX_KEY);
       if (familyIdx !== null) s.currentGameIndex = parseInt(familyIdx, 10) || 0;
+      // Backfill morningTasks for existing profiles
+      Object.keys(s.profiles || {}).forEach(id => {
+        if (!s.profiles[id].morningTasks) {
+          s.profiles[id].morningTasks = getDefaultMorningTasks();
+        }
+        if (s.profiles[id].morningBestTime === undefined) {
+          s.profiles[id].morningBestTime = null;
+        }
+      });
       return s;
     }
   } catch {}
@@ -50,7 +69,12 @@ export default function App() {
   const [finalTimes, setFinalTimes] = useState([]);
   const [waitingMessage, setWaitingMessage] = useState(null);
   const [tick, setTick] = useState(0); // increments every second to drive timer display
-  const [subtitle] = useState(() => MAIN_SUBTITLES[Math.floor(Math.random() * MAIN_SUBTITLES.length)]);
+  const [appMode, setAppModeState] = useState(() => localStorage.getItem(APP_MODE_KEY) || 'bedtime');
+  const [subtitle, setSubtitle] = useState(() => {
+    const mode = localStorage.getItem(APP_MODE_KEY) || 'bedtime';
+    const list = mode === 'morning' ? MORNING_SUBTITLES : MAIN_SUBTITLES;
+    return list[Math.floor(Math.random() * list.length)];
+  });
   const [compFinishModal, setCompFinishModal] = useState(null); // { name, time, waiting: [] }
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
 
@@ -75,6 +99,15 @@ export default function App() {
 
   const activeProfile = appState.profiles[appState.activeProfileId];
 
+  // ── App mode (Bedtime / Morning) ─────────────────────────────────────────────
+  const switchAppMode = useCallback((mode) => {
+    localStorage.setItem(APP_MODE_KEY, mode);
+    setAppModeState(mode);
+    const list = mode === 'morning' ? MORNING_SUBTITLES : MAIN_SUBTITLES;
+    setSubtitle(list[Math.floor(Math.random() * list.length)]);
+    track('app_mode_changed', { mode });
+  }, []);
+
   // ── Sleep mode ──────────────────────────────────────────────────────────────
   const startSleepMode = useCallback((triggeredBy = 'button') => {
     if (rewardTimerRef.current) clearInterval(rewardTimerRef.current);
@@ -85,9 +118,9 @@ export default function App() {
       currentAudioRef.current = null;
       setIsPlayingBeat(false);
     }
-    playLullaby();
+    if (appMode !== 'morning') playLullaby();
     track('sleep_mode_triggered', { triggered_by: triggeredBy });
-  }, [playLullaby]);
+  }, [playLullaby, appMode]);
 
   // Keep a stable ref so the reward timer interval can call it
   useEffect(() => { startSleepModeRef.current = startSleepMode; }, [startSleepMode]);
@@ -132,6 +165,7 @@ export default function App() {
 
   // ── Trigger success ───────────────────────────────────────────────────────────
   const triggerSuccess = useCallback((stateSnapshot, isJoint) => {
+    const isMorning = appMode === 'morning';
     const times = [];
     const log = {
       date: new Date().toLocaleDateString(),
@@ -141,6 +175,7 @@ export default function App() {
     };
 
     const updatedProfiles = { ...stateSnapshot.profiles };
+    const bestTimeKey = isMorning ? 'morningBestTime' : 'bestTime';
 
     if (isJoint) {
       Object.keys(stateSnapshot.profiles)
@@ -148,24 +183,29 @@ export default function App() {
         .forEach(id => {
           const p = { ...stateSnapshot.profiles[id] };
           const elapsed = getElapsed(p);
-          log.players.push({ name: p.name, time: elapsed, tasks: p.tasks.map(t => ({ title: t.title, duration: t.duration })) });
+          const activeTasks = getProfileTasks(p, appMode);
+          log.players.push({ name: p.name, time: elapsed, tasks: activeTasks.map(t => ({ title: t.title, duration: t.duration })) });
           let rec = '';
-          if (p.bestTime === null || elapsed < p.bestTime) { p.bestTime = elapsed; rec = '🌟 RECORD!'; }
+          if (p[bestTimeKey] === null || p[bestTimeKey] === undefined || elapsed < p[bestTimeKey]) { p[bestTimeKey] = elapsed; rec = '🌟 RECORD!'; }
           updatedProfiles[id] = p;
           times.push(`${p.name}: ${formatTime(elapsed)} ${rec}`);
         });
     } else {
       const p = { ...stateSnapshot.profiles[stateSnapshot.activeProfileId] };
       const elapsed = getElapsed(p);
-      log.players.push({ name: p.name, time: elapsed, tasks: p.tasks.map(t => ({ title: t.title, duration: t.duration })) });
+      const activeTasks = getProfileTasks(p, appMode);
+      log.players.push({ name: p.name, time: elapsed, tasks: activeTasks.map(t => ({ title: t.title, duration: t.duration })) });
       let rec = '';
-      if (p.bestTime === null || elapsed < p.bestTime) { p.bestTime = elapsed; rec = '🌟 RECORD!'; }
+      if (p[bestTimeKey] === null || p[bestTimeKey] === undefined || elapsed < p[bestTimeKey]) { p[bestTimeKey] = elapsed; rec = '🌟 RECORD!'; }
       updatedProfiles[stateSnapshot.activeProfileId] = p;
       times.push(`${formatTime(elapsed)} ${rec}`);
     }
 
-    const rewards = getRewards();
-    const currentIdx = (stateSnapshot.currentGameIndex ?? 0) % rewards.length;
+    const rewards = isMorning ? getMorningRewards() : getRewards();
+    const morningIdx = parseInt(localStorage.getItem(MORNING_GAME_INDEX_KEY) || '0', 10) || 0;
+    const currentIdx = isMorning
+      ? morningIdx % rewards.length
+      : (stateSnapshot.currentGameIndex ?? 0) % rewards.length;
     const reward = rewards[currentIdx];
 
     const finalState = {
@@ -186,14 +226,15 @@ export default function App() {
     playSuccessSound();
     fireBigConfetti();
     startRewardTimer(finalState.rewardDuration || 120);
-  }, [saveAppState, playSuccessSound, fireBigConfetti, startRewardTimer]);
+  }, [saveAppState, playSuccessSound, fireBigConfetti, startRewardTimer, appMode]);
 
   // ── Toggle task ───────────────────────────────────────────────────────────────
   const toggleTask = useCallback(async (taskId) => {
     await unlockAudio();
 
     const prevProfile = appState.profiles[appState.activeProfileId];
-    const prevDoneCount = prevProfile.tasks.filter(t => t.done).length;
+    const prevTasks = getProfileTasks(prevProfile, appMode);
+    const prevDoneCount = prevTasks.filter(t => t.done).length;
 
     let missionStartTime = prevProfile.missionStartTime;
     let lastTaskAt = prevProfile.lastTaskAt;
@@ -202,7 +243,7 @@ export default function App() {
       lastTaskAt = missionStartTime;
     }
 
-    const tasks = prevProfile.tasks.map(t => {
+    const tasks = prevTasks.map(t => {
       if (t.id !== taskId) return t;
       if (!t.done) {
         const now = Date.now();
@@ -226,12 +267,11 @@ export default function App() {
       });
     }
 
-    const updatedProfile = {
-      ...prevProfile,
+    const updatedProfile = setProfileTasks(
+      { ...prevProfile, missionStartTime, lastTaskAt },
+      appMode,
       tasks,
-      missionStartTime,
-      lastTaskAt,
-    };
+    );
 
     const allDone = tasks.length > 0 && tasks.every(t => t.done);
     if (allDone) updatedProfile.missionEndTime = Date.now();
@@ -244,12 +284,12 @@ export default function App() {
     if (allDone) {
       const sibs = Object.keys(nextState.profiles).filter(id => id !== 'shared');
       if (nextState.gameMode === 'competition' && sibs.length > 1) {
-        if (sibs.every(id => nextState.profiles[id].tasks.every(t => t.done))) {
+        if (sibs.every(id => getProfileTasks(nextState.profiles[id], appMode).every(t => t.done))) {
           saveAppState(nextState);
           triggerSuccess(nextState, true);
         } else {
           const waiting = sibs
-            .filter(id => !nextState.profiles[id].tasks.every(t => t.done))
+            .filter(id => !getProfileTasks(nextState.profiles[id], appMode).every(t => t.done))
             .map(id => nextState.profiles[id].name);
           setWaitingMessage(`Waiting for: ${waiting.join(', ')}`);
           const finishedProfile = nextState.profiles[appState.activeProfileId];
@@ -268,15 +308,16 @@ export default function App() {
       setWaitingMessage(null);
       saveAppState(nextState);
     }
-  }, [appState, saveAppState, unlockAudio, playRocketSound, triggerSuccess]);
+  }, [appState, saveAppState, unlockAudio, playRocketSound, triggerSuccess, appMode]);
 
   // ── Reset ─────────────────────────────────────────────────────────────────────
   const resetMissions = useCallback(() => {
     const profiles = {};
     Object.keys(appState.profiles).forEach(id => {
+      const p = appState.profiles[id];
+      const resetTasks = getProfileTasks(p, appMode).map(t => ({ ...t, done: false, duration: null }));
       profiles[id] = {
-        ...appState.profiles[id],
-        tasks: appState.profiles[id].tasks.map(t => ({ ...t, done: false, duration: null })),
+        ...setProfileTasks(p, appMode, resetTasks),
         missionStartTime: null,
         missionEndTime: null,
         lastTaskAt: null,
@@ -290,14 +331,21 @@ export default function App() {
     if (rewardTimerRef.current) clearInterval(rewardTimerRef.current);
     stopLullaby();
     track('day_reset');
-    const nextGameIndex = ((appState.currentGameIndex ?? 0) + 1) % 10;
-    localStorage.setItem(GAME_INDEX_KEY, String(nextGameIndex));
-    const next = { ...appState, profiles, currentGameIndex: nextGameIndex };
+    let nextGameIndex;
+    if (appMode === 'morning') {
+      const morningIdx = parseInt(localStorage.getItem(MORNING_GAME_INDEX_KEY) || '0', 10) || 0;
+      nextGameIndex = (morningIdx + 1) % 6;
+      localStorage.setItem(MORNING_GAME_INDEX_KEY, String(nextGameIndex));
+    } else {
+      nextGameIndex = ((appState.currentGameIndex ?? 0) + 1) % 10;
+      localStorage.setItem(GAME_INDEX_KEY, String(nextGameIndex));
+    }
+    const next = { ...appState, profiles, currentGameIndex: appMode === 'morning' ? appState.currentGameIndex : nextGameIndex };
     saveAppState(next);
     setShowSleepMode(false);
     setShowSuccess(false);
     setWaitingMessage(null);
-  }, [appState, saveAppState, stopLullaby]);
+  }, [appState, saveAppState, stopLullaby, appMode]);
 
   // ── Mode / profile switching ─────────────────────────────────────────────────
   const setGameMode = useCallback((mode) => {
@@ -356,32 +404,39 @@ export default function App() {
   }, [appState, saveAppState]);
 
   const removeTask = useCallback((taskId) => {
-    const p = { ...appState.profiles[appState.activeProfileId] };
-    p.tasks = p.tasks.filter(t => t.id !== taskId);
-    saveAppState({ ...appState, profiles: { ...appState.profiles, [appState.activeProfileId]: p } });
-  }, [appState, saveAppState]);
+    const p = appState.profiles[appState.activeProfileId];
+    const updated = setProfileTasks(p, appMode, getProfileTasks(p, appMode).filter(t => t.id !== taskId));
+    saveAppState({ ...appState, profiles: { ...appState.profiles, [appState.activeProfileId]: updated } });
+  }, [appState, saveAppState, appMode]);
 
   const addTask = useCallback((title) => {
     if (!title?.trim()) return;
-    const p = { ...appState.profiles[appState.activeProfileId] };
-    p.tasks = [...p.tasks, { id: 'task_' + Date.now(), title: title.trim(), icon: 'star', color: 'from-cyan-400 to-blue-500', done: false }];
-    saveAppState({ ...appState, profiles: { ...appState.profiles, [appState.activeProfileId]: p } });
-  }, [appState, saveAppState]);
+    const p = appState.profiles[appState.activeProfileId];
+    const newTasks = [...getProfileTasks(p, appMode), { id: 'task_' + Date.now(), title: title.trim(), icon: 'star', color: 'from-cyan-400 to-blue-500', done: false }];
+    const updated = setProfileTasks(p, appMode, newTasks);
+    saveAppState({ ...appState, profiles: { ...appState.profiles, [appState.activeProfileId]: updated } });
+  }, [appState, saveAppState, appMode]);
 
   // ── Reward spinning ───────────────────────────────────────────────────────────
   const respinReward = useCallback(() => {
-    const rewards = getRewards();
-    // All 10 games are available, r3 gets 3x weight
-    const pool = [];
-    for (const r of rewards) {
-      pool.push(r);
-      if (r.id === 'r3') pool.push(r, r);
+    let reward;
+    if (appMode === 'morning') {
+      const rewards = getMorningRewards();
+      reward = rewards[Math.floor(Math.random() * rewards.length)];
+    } else {
+      const rewards = getRewards();
+      // All 10 games are available, r3 gets 3x weight
+      const pool = [];
+      for (const r of rewards) {
+        pool.push(r);
+        if (r.id === 'r3') pool.push(r, r);
+      }
+      reward = pool[Math.floor(Math.random() * pool.length)];
     }
-    const reward = pool[Math.floor(Math.random() * pool.length)];
     track('game_spun', { game_shown: reward.title });
     setCurrentReward(reward);
     startRewardTimer(appState.rewardDuration || 120);
-  }, [appState.rewardDuration, startRewardTimer]);
+  }, [appState.rewardDuration, startRewardTimer, appMode]);
 
   // ── Drag-to-reorder ───────────────────────────────────────────────────────────
   const sensors = useSensors(
@@ -392,12 +447,13 @@ export default function App() {
   const handleDragEnd = useCallback(({ active, over }) => {
     if (!over || active.id === over.id) return;
     const profile = appState.profiles[appState.activeProfileId];
-    const oldIdx = profile.tasks.findIndex(t => t.id === active.id);
-    const newIdx = profile.tasks.findIndex(t => t.id === over.id);
+    const activeTasks = getProfileTasks(profile, appMode);
+    const oldIdx = activeTasks.findIndex(t => t.id === active.id);
+    const newIdx = activeTasks.findIndex(t => t.id === over.id);
     if (oldIdx === -1 || newIdx === -1) return;
-    const updatedProfile = { ...profile, tasks: arrayMove(profile.tasks, oldIdx, newIdx) };
+    const updatedProfile = setProfileTasks(profile, appMode, arrayMove(activeTasks, oldIdx, newIdx));
     saveAppState({ ...appState, profiles: { ...appState.profiles, [appState.activeProfileId]: updatedProfile } });
-  }, [appState, saveAppState]);
+  }, [appState, saveAppState, appMode]);
 
   // ── Profile management ────────────────────────────────────────────────────────
   const addSibling = useCallback(() => {
@@ -413,7 +469,7 @@ export default function App() {
           ...appState,
           profiles: {
             ...appState.profiles,
-            [id]: { name: name.trim(), tasks: getDefaultTasks(), bestTime: null, missionStartTime: null, missionEndTime: null, lastTaskAt: null, avatar: image || null },
+            [id]: { name: name.trim(), tasks: getDefaultTasks(), morningTasks: getDefaultMorningTasks(), bestTime: null, morningBestTime: null, missionStartTime: null, missionEndTime: null, lastTaskAt: null, avatar: image || null },
           },
           activeProfileId: id,
         };
@@ -483,13 +539,14 @@ export default function App() {
       message: 'This will replace your current tasks with the default 6. Are you sure?',
       confirmText: 'Reset',
       onConfirm: () => {
-        const p = { ...appState.profiles[appState.activeProfileId], tasks: getDefaultTasks() };
+        const defaultTasks = appMode === 'morning' ? getDefaultMorningTasks() : getDefaultTasks();
+        const p = setProfileTasks(appState.profiles[appState.activeProfileId], appMode, defaultTasks);
         saveAppState({ ...appState, profiles: { ...appState.profiles, [appState.activeProfileId]: p } });
         setModalConfig(null);
       },
       onCancel: () => setModalConfig(null),
     });
-  }, [appState, saveAppState]);
+  }, [appState, saveAppState, appMode]);
 
   const showCloudBackup = useCallback(() => {
     setModalConfig({
@@ -510,8 +567,18 @@ export default function App() {
       className="bg-gradient-to-b from-indigo-900 via-purple-900 to-slate-900 min-h-screen text-white font-sans antialiased overflow-x-hidden flex flex-col selection:bg-pink-500 selection:text-white"
       onClick={unlockAudio}
     >
-      {/* Cloud Backup button */}
-      <div className="w-full flex justify-end p-4 z-20 relative">
+      {/* Top bar: App Mode toggle + Cloud Backup */}
+      <div className="w-full flex items-center justify-between px-4 pt-4 pb-2 z-20 relative">
+        <div className="flex bg-slate-800/80 p-1 rounded-full border border-indigo-500/20 shadow-lg">
+          <button
+            onClick={() => switchAppMode('bedtime')}
+            className={`px-4 py-1.5 rounded-full text-xs font-black tracking-wide transition-all ${appMode === 'bedtime' ? 'bg-indigo-500 text-white shadow-lg' : 'text-indigo-300'}`}
+          >🌙 Bedtime</button>
+          <button
+            onClick={() => switchAppMode('morning')}
+            className={`px-4 py-1.5 rounded-full text-xs font-black tracking-wide transition-all ${appMode === 'morning' ? 'bg-amber-500 text-white shadow-lg' : 'text-indigo-300'}`}
+          >☀️ Morning</button>
+        </div>
         <button
           onClick={showCloudBackup}
           className="flex items-center gap-2 bg-slate-800/40 hover:bg-indigo-500/30 px-4 py-2 rounded-full border border-indigo-500/20 transition-all text-xs font-bold text-indigo-300"
@@ -522,7 +589,7 @@ export default function App() {
       </div>
 
       {/* Header */}
-      <Header appState={appState} tick={tick} subtitle={subtitle} />
+      <Header appState={appState} appMode={appMode} tick={tick} subtitle={subtitle} />
 
       {/* Mode toggle + Profile selector */}
       <div className="max-w-4xl mx-auto w-full px-4 mb-4 z-10 relative text-slate-800">
@@ -583,13 +650,13 @@ export default function App() {
       </div>
 
       {/* Progress Bar */}
-      <ProgressBar tasks={activeProfile?.tasks || []} />
+      <ProgressBar tasks={activeProfile ? getProfileTasks(activeProfile, appMode) : []} />
 
       {/* Task grid */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <main className="max-w-4xl mx-auto w-full px-4 pb-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-grow z-10 relative">
-        <SortableContext items={(activeProfile?.tasks || []).map(t => t.id)} strategy={rectSortingStrategy}>
-          {(activeProfile?.tasks || []).map(task => (
+        <SortableContext items={(activeProfile ? getProfileTasks(activeProfile, appMode) : []).map(t => t.id)} strategy={rectSortingStrategy}>
+          {(activeProfile ? getProfileTasks(activeProfile, appMode) : []).map(task => (
             <TaskCard
               key={task.id}
               task={task}
@@ -675,7 +742,10 @@ export default function App() {
         <SuccessModal
           reward={currentReward}
           rewardTimeLeft={rewardTimeLeft}
-          nightNumber={(appState.currentGameIndex ?? 0) + 1}
+          appMode={appMode}
+          nightNumber={appMode === 'morning'
+            ? (parseInt(localStorage.getItem(MORNING_GAME_INDEX_KEY) || '0', 10) || 0) + 1
+            : (appState.currentGameIndex ?? 0) + 1}
           isPlayingBeat={isPlayingBeat}
           currentTrackIndex={currentTrackIndex}
           finalTimes={finalTimes}
@@ -688,7 +758,7 @@ export default function App() {
         />
       )}
 
-      {showSleepMode && <SleepMode onReset={resetMissions} />}
+      {showSleepMode && <SleepMode appMode={appMode} onReset={resetMissions} />}
 
       {showStats && (
         <StatsModal usageHistory={appState.usageHistory} onClose={() => setShowStats(false)} />

@@ -1,12 +1,13 @@
 import { User } from 'lucide-react';
 import { formatTime, getElapsed } from '../utils/helpers';
 
-export default function Header({ appState, tick, subtitle }) {
+export default function Header({ appState, appMode, tick, subtitle }) {
   const isShared = appState.activeProfileId === 'shared';
   const p = appState.profiles[appState.activeProfileId];
   if (!p) return null;
 
-  const title = isShared ? 'Bedtime Mission' : `${p.name}'s Bedtime Mission`;
+  const missionLabel = appMode === 'morning' ? 'Morning Mission' : 'Bedtime Mission';
+  const title = isShared ? missionLabel : `${p.name}'s ${missionLabel}`;
   const elapsed = getElapsed(p);
   const showTimer = !!p.missionStartTime;
 

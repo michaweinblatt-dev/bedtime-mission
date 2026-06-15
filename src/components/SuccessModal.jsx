@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Zap, RefreshCw, Play, Square, Moon } from 'lucide-react';
 import { formatTime } from '../utils/helpers';
-import { SPACE_DJ_PLAYLIST, HANDOFF_LINES } from '../utils/constants';
+import { SPACE_DJ_PLAYLIST, HANDOFF_LINES, MORNING_HANDOFF_LINES } from '../utils/constants';
 
 export default function SuccessModal({
   reward,
   rewardTimeLeft,
+  appMode,
   nightNumber,
   isPlayingBeat,
   currentTrackIndex,
@@ -17,7 +18,9 @@ export default function SuccessModal({
   onShowStats,
   onSleepMode,
 }) {
-  const [handoffLine] = useState(() => HANDOFF_LINES[Math.floor(Math.random() * HANDOFF_LINES.length)]);
+  const isMorning = appMode === 'morning';
+  const handoffPool = isMorning ? MORNING_HANDOFF_LINES : HANDOFF_LINES;
+  const [handoffLine] = useState(() => handoffPool[Math.floor(Math.random() * handoffPool.length)]);
 
   const showMusic = reward.title.includes('Dance') || reward.title.includes('DJ');
 
@@ -49,7 +52,9 @@ export default function SuccessModal({
         {/* Header */}
         <div className="flex items-center justify-center gap-2 mb-6 text-emerald-500">
           <Zap className="w-5 h-5 text-emerald-500" />
-          <h2 className="text-xl font-black text-slate-400 uppercase tracking-widest">Mission Success</h2>
+          <h2 className="text-xl font-black text-slate-400 uppercase tracking-widest">
+            {isMorning ? 'Ready to Launch! 🚀' : 'Mission Success'}
+          </h2>
         </div>
 
         {/* Handoff line */}
@@ -58,9 +63,14 @@ export default function SuccessModal({
         </p>
 
         {/* Prize card */}
+        <p className="text-[10px] font-black uppercase text-slate-400 tracking-[0.2em] mb-2 text-center">
+          {isMorning ? "Today's Car Ride Challenge" : "Tonight's Prize Game"}
+        </p>
         <div className="bg-gradient-to-b from-indigo-600 to-indigo-800 rounded-[32px] p-6 shadow-xl text-white mb-6 flex-grow flex flex-col justify-center border-4 border-indigo-400">
           <p className="text-xs text-indigo-300/60 mb-3 text-center">
-            Night {nightNumber} of 10 · {nightNumber} unlocked
+            {isMorning
+              ? `Morning ${nightNumber} of 6 · ${nightNumber} unlocked`
+              : `Night ${nightNumber} of 10 · ${nightNumber} unlocked`}
           </p>
 
           <p className="text-2xl sm:text-3xl font-black mb-4 leading-tight drop-shadow-md uppercase text-white">
@@ -131,7 +141,9 @@ export default function SuccessModal({
             onClick={onSleepMode}
             className="flex-[2] bg-slate-900 text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg hover:bg-indigo-950 active:scale-95 transition-all"
           >
-            <Moon className="w-4 h-4 text-white" /> Sleep Mode 🌙
+            {isMorning
+              ? <>🚀 Time to Go!</>
+              : <><Moon className="w-4 h-4 text-white" /> Sleep Mode 🌙</>}
           </button>
         </div>
 

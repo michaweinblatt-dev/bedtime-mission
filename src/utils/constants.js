@@ -1,10 +1,24 @@
 export const STORAGE_KEY = 'bedtime_v30';
 export const GAME_INDEX_KEY = 'bedtime_gameIndex';
+export const APP_MODE_KEY = 'bedtime_appMode';
+export const MORNING_GAME_INDEX_KEY = 'bedtime_morningGameIndex';
 
 export const MAIN_SUBTITLES = [
   "Complete your missions to unlock tonight's parent challenge.",
   "Finish strong. Tonight's game is worth it.",
   "Your missions unlock something good tonight.",
+];
+
+export const MORNING_SUBTITLES = [
+  "Complete your missions and earn today's car ride challenge!",
+  "Finish strong. Today's reward is worth it.",
+  "Your missions unlock something good this morning.",
+];
+
+export const MORNING_HANDOFF_LINES = [
+  "Your turn, Mom & Dad. 🎯",
+  "Kid-stronauts: mission complete. Parents: time to shine. ⭐",
+  "Astronauts earned it. Parents: you're on. 🚀",
 ];
 
 export const HANDOFF_LINES = [
@@ -19,6 +33,28 @@ export const SPACE_DJ_PLAYLIST = [
   { id: 0, name: 'Rocket Pajama Party', url: '/Rocket.mp3' },
   { id: 1, name: 'Moonboot Dance Party', url: '/moonbot.mp3' },
 ];
+
+export function getDefaultMorningTasks() {
+  return [
+    { id: 'dressed',   title: 'Get Dressed',        icon: 'shirt',      color: 'from-yellow-400 to-orange-400',  done: false },
+    { id: 'breakfast', title: 'Eat Breakfast',       icon: 'utensils',   color: 'from-green-400 to-emerald-500',  done: false },
+    { id: 'cleanup',   title: 'Clean Up Breakfast',  icon: 'trash-2',    color: 'from-teal-400 to-cyan-500',      done: false },
+    { id: 'backpack',  title: 'Pack Backpack',       icon: 'backpack',   color: 'from-blue-400 to-indigo-500',    done: false },
+    { id: 'mbrush',    title: 'Brush Teeth',         icon: 'smile',      color: 'from-pink-400 to-rose-500',      done: false },
+    { id: 'shoes',     title: 'Shoes On',            icon: 'footprints', color: 'from-purple-400 to-fuchsia-500', done: false },
+  ];
+}
+
+export function getMorningRewards() {
+  return [
+    { id: 'm1', title: 'DJ for the Ride 🎵',   desc: "You pick every song on the drive today. No complaints from the grown-ups." },
+    { id: 'm2', title: '20 Questions 🤔',       desc: "Think of something — anything. Parents have to guess in 20 questions or less." },
+    { id: 'm3', title: 'Joke Master 😂',        desc: "Tell your best joke. Parents are not allowed to laugh. Good luck to them." },
+    { id: 'm4', title: 'Podcast Pick 🎙️',      desc: "You choose what everyone listens to on the ride. Your call." },
+    { id: 'm5', title: 'Silly Question 🤔',     desc: "Ask a parent anything you want. They have to answer honestly." },
+    { id: 'm6', title: 'Story Time 📖',         desc: "Make up a story together on the ride. Kid starts, parents add to it." },
+  ];
+}
 
 export function getDefaultTasks() {
   return [
@@ -58,7 +94,9 @@ export function getDefaultAppState() {
       shared: {
         name: 'The Crew',
         tasks: getDefaultTasks(),
+        morningTasks: getDefaultMorningTasks(),
         bestTime: null,
+        morningBestTime: null,
         missionStartTime: null,
         missionEndTime: null,
         avatar: null,

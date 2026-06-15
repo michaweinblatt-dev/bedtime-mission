@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import { Moon } from 'lucide-react';
 import { track } from '../utils/analytics';
 
-export default function SleepMode({ onReset }) {
+export default function SleepMode({ appMode, onReset }) {
   const [inhale, setInhale] = useState(true);
   const [copied, setCopied] = useState(false);
+  const isMorning = appMode === 'morning';
 
   const handleShare = async () => {
     track('share_tapped');
@@ -28,6 +29,28 @@ export default function SleepMode({ onReset }) {
     const id = setInterval(() => setInhale(prev => !prev), 4000);
     return () => clearInterval(id);
   }, []);
+
+  if (isMorning) {
+    return (
+      <div className="fixed inset-0 z-[110] bg-slate-950 flex items-center justify-center p-8 text-center">
+        <div className="flex flex-col items-center justify-center w-full">
+          <p className="text-6xl mb-6">☀️</p>
+          <h2 className="text-4xl font-black text-indigo-100 mb-4 leading-tight uppercase text-center">
+            Have a wonderful day!
+          </h2>
+          <p className="text-xl font-bold text-indigo-300 mb-12 text-center">
+            See you tonight for another mission.
+          </p>
+          <button
+            onClick={onReset}
+            className="bg-amber-500 hover:bg-amber-400 active:scale-95 text-white font-black px-8 py-4 rounded-full text-sm uppercase tracking-widest transition-all shadow-lg"
+          >
+            End Morning &amp; Reset
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-[110] bg-slate-950 flex items-center justify-center p-8 text-center">
