@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog — Bedtime Mission</title>
+  <meta name="description" content="Stories from the bedtime trenches." />
+  <meta name="theme-color" content="#1e1b4b" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(160deg, #1e1b4b 0%, #312e81 40%, #1e1b4b 100%);
+      min-height: 100vh;
+      color: #fff;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── Nav ── */
+    nav {
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .nav-logo {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #a5b4fc;
+      text-decoration: none;
+    }
+    .nav-logo:hover { color: #c7d2fe; }
+
+    .nav-cta {
+      background: #4f46e5;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 10px 20px;
+      border-radius: 999px;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .nav-cta:hover { background: #6366f1; }
+
+    /* ── Header ── */
+    .page-header {
+      padding: 48px 0 40px;
+      border-bottom: 1px solid rgba(165,180,252,0.12);
+      margin-bottom: 48px;
+    }
+
+    .back-link {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 700;
+      color: #818cf8;
+      text-decoration: none;
+      margin-bottom: 20px;
+      letter-spacing: 0.03em;
+    }
+    .back-link:hover { color: #a5b4fc; }
+
+    .page-title {
+      font-size: clamp(30px, 6vw, 44px);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: -0.02em;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .page-subtitle {
+      font-size: 16px;
+      font-weight: 500;
+      color: #a5b4fc;
+    }
+
+    /* ── Post list ── */
+    .post-list {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-bottom: 80px;
+    }
+
+    .post-card {
+      display: block;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(165,180,252,0.15);
+      border-radius: 20px;
+      padding: 28px;
+      text-decoration: none;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .post-card:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(165,180,252,0.35);
+    }
+
+    .post-date {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #6366f1;
+      margin-bottom: 10px;
+    }
+
+    .post-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.3;
+      margin-bottom: 10px;
+    }
+
+    .post-preview {
+      font-size: 14px;
+      font-weight: 500;
+      color: #a5b4fc;
+      line-height: 1.6;
+    }
+
+    .post-read-more {
+      display: inline-block;
+      margin-top: 14px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #818cf8;
+      letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="/" class="nav-logo">🚀 Bedtime Mission</a>
+    <a href="/app" class="nav-cta">Open App →</a>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <a href="/" class="back-link">← Back to Home</a>
+      <h1 class="page-title">Blog</h1>
+      <p class="page-subtitle">Stories from the bedtime trenches.</p>
+    </div>
+
+    <div class="post-list">
+      <a href="/blog/ai-bedtime-son" class="post-card">
+        <p class="post-date">June 2025</p>
+        <p class="post-title">I asked AI to fix bedtime. My 8-year-old helped.</p>
+        <p class="post-preview">Bedtime in our house was chaos. The kind with pajamas.</p>
+        <span class="post-read-more">Read more →</span>
+      </a>
+    </div>
+  </div>
+
+</body>
+</html>

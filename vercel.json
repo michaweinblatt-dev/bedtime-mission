@@ -5,6 +5,8 @@
   "rewrites": [
     { "source": "/app", "destination": "/index.html" },
     { "source": "/app/(.*)", "destination": "/index.html" },
+    { "source": "/blog/ai-bedtime-son", "destination": "/blog/ai-bedtime-son.html" },
+    { "source": "/blog", "destination": "/blog.html" },
     { "source": "/", "destination": "/landing.html" }
   ]
 }

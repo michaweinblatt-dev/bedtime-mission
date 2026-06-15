@@ -60,6 +60,21 @@
     }
     .nav-cta:hover { background: #6366f1; }
 
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-link {
+      font-size: 13px;
+      font-weight: 700;
+      color: #818cf8;
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+    .nav-link:hover { color: #a5b4fc; }
+
     /* ── Hero ────────────────────────────────────────────────── */
     .hero {
       padding: 56px 0 64px;
@@ -289,7 +304,10 @@
   <!-- Nav -->
   <nav>
     <span class="nav-logo">🚀 Bedtime Mission</span>
-    <a href="/app" class="nav-cta">Open App →</a>
+    <div class="nav-right">
+      <a href="/blog" class="nav-link">Blog</a>
+      <a href="/app" class="nav-cta">Open App →</a>
+    </div>
   </nav>
 
   <!-- Hero -->
