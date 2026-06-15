@@ -1,7 +1,6 @@
 const ONBOARDING_KEY = 'bedtime_onboarded';
 
 const BULLETS = [
-  'Complete your missions to unlock tonight\'s parent-led game',
   'Tap COMPETITION to race your siblings',
   'Parents — you have to actually do the game 😄',
 ];
