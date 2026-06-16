@@ -1,12 +1,12 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "framework": "vite",
-  "rewrites": [
-    { "source": "/app", "destination": "/index.html" },
-    { "source": "/app/(.*)", "destination": "/index.html" },
-    { "source": "/blog/ai-bedtime-son", "destination": "/blog/ai-bedtime-son.html" },
-    { "source": "/blog", "destination": "/blog.html" },
-    { "source": "/", "destination": "/landing.html" }
+  "routes": [
+    { "src": "^/$", "dest": "/landing.html" },
+    { "src": "^/app$", "dest": "/index.html" },
+    { "src": "^/app/(.*)$", "dest": "/index.html" },
+    { "src": "^/blog$", "dest": "/blog.html" },
+    { "src": "^/blog/ai-bedtime-son$", "dest": "/blog/ai-bedtime-son.html" },
+    { "handle": "filesystem" }
   ]
 }
