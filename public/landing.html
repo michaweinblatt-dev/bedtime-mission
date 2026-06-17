@@ -156,43 +156,45 @@
       color: #fff;
     }
 
-    .steps {
+    /* ── Screenshots / phone mockups ─────────────────────────── */
+    .shots {
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      align-items: center;
+      gap: 48px;
     }
 
-    .step {
+    .shot {
       display: flex;
-      align-items: flex-start;
-      gap: 20px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(165,180,252,0.15);
-      border-radius: 20px;
-      padding: 24px;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 240px;
     }
 
-    .step-icon {
-      font-size: 28px;
-      flex-shrink: 0;
-      line-height: 1;
-      margin-top: 2px;
+    .phone-frame {
+      width: 100%;
+      border: 6px solid #0f0d2b;
+      border-radius: 36px;
+      overflow: hidden;
+      background: #0f0d2b;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.45);
+      line-height: 0;
     }
 
-    .step-title {
-      font-size: 16px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      color: #e0e7ff;
-      margin-bottom: 6px;
+    .phone-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
     }
 
-    .step-body {
+    .shot-caption {
+      margin-top: 18px;
       font-size: 15px;
-      font-weight: 500;
-      color: #a5b4fc;
-      line-height: 1.5;
+      font-weight: 800;
+      text-align: center;
+      color: #e0e7ff;
+      letter-spacing: 0.01em;
     }
 
     /* ── Game cards ──────────────────────────────────────────── */
@@ -296,6 +298,17 @@
       .cards .card:last-child {
         grid-column: 1 / -1;
       }
+
+      .shots {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 20px;
+      }
+      .shot {
+        flex: 1;
+        max-width: none;
+      }
     }
   </style>
 </head>
@@ -328,27 +341,24 @@
     <section>
       <p class="section-label">Here's how it works</p>
       <h2 class="section-title">Tap along as you go.</h2>
-      <div class="steps">
-        <div class="step">
-          <span class="step-icon">✓</span>
-          <div>
-            <p class="step-title">Check off your missions</p>
-            <p class="step-body">Brush teeth, pajamas, the whole routine — check them off as you go.</p>
+      <div class="shots">
+        <div class="shot">
+          <div class="phone-frame">
+            <img src="/images/screenshot-checklist.png" alt="Checklist of bedtime missions" loading="lazy" />
           </div>
+          <p class="shot-caption">Check off your missions</p>
         </div>
-        <div class="step">
-          <span class="step-icon">🎮</span>
-          <div>
-            <p class="step-title">Unlock tonight's parent game</p>
-            <p class="step-body">A surprise challenge appears when all missions are complete.</p>
+        <div class="shot">
+          <div class="phone-frame">
+            <img src="/images/screenshot-success.png" alt="Unlocked parent game with confetti" loading="lazy" />
           </div>
+          <p class="shot-caption">Unlock tonight's parent game 🎉</p>
         </div>
-        <div class="step">
-          <span class="step-icon">🚀</span>
-          <div>
-            <p class="step-title">Parents perform</p>
-            <p class="step-body">Pillow fights, dance parties, freeze tag — phone goes in your pocket.</p>
+        <div class="shot">
+          <div class="phone-frame">
+            <img src="/images/screenshot-sleep.png" alt="Sleep mode wind-down screen" loading="lazy" />
           </div>
+          <p class="shot-caption">Wind down together 🌙</p>
         </div>
       </div>
     </section>
