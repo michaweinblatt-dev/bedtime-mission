@@ -8,6 +8,7 @@
     { "src": "^/blog$", "dest": "/blog.html" },
     { "src": "^/blog/ai-bedtime-son$", "dest": "/blog/ai-bedtime-son.html" },
     { "src": "^/blog/bedtime-routine-pillow-fight$", "dest": "/blog/bedtime-routine-pillow-fight.html" },
+    { "src": "^/blog/digital-bedtime-routine-chart$", "dest": "/blog/digital-bedtime-routine-chart.html" },
     { "handle": "filesystem" }
   ]
 }
