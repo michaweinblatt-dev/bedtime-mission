@@ -7,6 +7,7 @@
     { "src": "^/app/(.*)$", "dest": "/index.html" },
     { "src": "^/blog$", "dest": "/blog.html" },
     { "src": "^/blog/ai-bedtime-son$", "dest": "/blog/ai-bedtime-son.html" },
+    { "src": "^/blog/bedtime-routine-pillow-fight$", "dest": "/blog/bedtime-routine-pillow-fight.html" },
     { "handle": "filesystem" }
   ]
 }
