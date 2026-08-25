@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import SpinWheel from './SpinWheel';
+import SpinWheel, { colorForSegment } from './SpinWheel';
 import { track } from '../utils/analytics';
 
 // The Captain spins for tonight's/today's reward game: one spin, then one
@@ -18,6 +18,7 @@ export default function GameWheelModal({ captainType, pool, onDone }) {
   const [respinUsed, setRespinUsed] = useState(false);
 
   const landedReward = targetId ? pool.find(r => r.id === targetId) : null;
+  const landedIdx = targetId ? segments.findIndex(s => s.id === targetId) : -1;
 
   const spin = () => {
     const reward = pool[Math.floor(Math.random() * pool.length)];
@@ -50,7 +51,16 @@ export default function GameWheelModal({ captainType, pool, onDone }) {
 
         {settled ? (
           <>
-            <p className="text-xl font-black text-indigo-600 mb-2 uppercase">{landedReward?.title}</p>
+            <div className="flex items-center justify-center gap-2 mb-2">
+              {landedIdx >= 0 && (
+                <span
+                  className="w-4 h-4 rounded-full border-2 border-white shadow shrink-0"
+                  style={{ backgroundColor: colorForSegment(landedIdx) }}
+                  aria-hidden="true"
+                />
+              )}
+              <p className="text-xl font-black text-indigo-600 uppercase">{landedReward?.title}</p>
+            </div>
             <p className="text-sm text-slate-500 mb-6">{landedReward?.desc}</p>
             <div className="flex gap-2">
               {!respinUsed && (

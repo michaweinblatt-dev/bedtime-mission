@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
-import SpinWheel from './SpinWheel';
+import SpinWheel, { colorForSegment } from './SpinWheel';
 import { useCaptainBag } from '../hooks/useCaptainBag';
 import { CAPTAIN_BAG_KEYS } from '../utils/constants';
 import { track } from '../utils/analytics';
@@ -26,6 +26,7 @@ export default function CaptainWheelModal({ captainType, roster, onDone, onClose
   // by unrelated parent re-renders (e.g. the app's once-a-second timer tick).
   const segments = useMemo(() => eligible.map(k => ({ id: k.id, label: k.name })), [eligible]);
   const landedName = targetId ? eligible.find(k => k.id === targetId)?.name : null;
+  const landedIdx = targetId ? segments.findIndex(s => s.id === targetId) : -1;
 
   const handleSpin = () => {
     const captainId = spin(eligible.map(k => k.id));
@@ -56,7 +57,16 @@ export default function CaptainWheelModal({ captainType, roster, onDone, onClose
 
         {settled ? (
           <>
-            <p className="text-3xl font-black text-indigo-600 mb-6">{landedName} 👑</p>
+            <div className="flex items-center justify-center gap-2 mb-6">
+              {landedIdx >= 0 && (
+                <span
+                  className="w-4 h-4 rounded-full border-2 border-white shadow shrink-0"
+                  style={{ backgroundColor: colorForSegment(landedIdx) }}
+                  aria-hidden="true"
+                />
+              )}
+              <p className="text-3xl font-black text-indigo-600">{landedName} 👑</p>
+            </div>
             <button
               onClick={() => onDone(targetId)}
               className="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-black py-4 rounded-2xl text-base transition-all shadow-lg"

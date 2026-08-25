@@ -3,6 +3,13 @@ import { useEffect, useRef, useState } from 'react';
 const HEX_COLORS = ['#f472b6', '#818cf8', '#c084fc', '#22d3ee', '#fbbf24', '#34d399', '#fb7185', '#60a5fa', '#a78bfa', '#4ade80'];
 const SPIN_DURATION_MS = 3200;
 
+// Exposed so callers can render a color swatch next to the settled result
+// text that matches the wedge under the pointer — a color match is far
+// easier to visually confirm at a glance than reading small rotated text.
+export function colorForSegment(index) {
+  return HEX_COLORS[index % HEX_COLORS.length];
+}
+
 // Presentational-only spinning wheel. The result is decided by the caller
 // (fairness bag or weighted random pick) BEFORE the animation starts —
 // this component just spins to land visually on `targetId`.
@@ -79,10 +86,10 @@ export default function SpinWheel({ segments, targetId, spinToken, onSettled, si
           return (
             <div
               key={s.id}
-              className="absolute top-1/2 left-1/2 origin-left"
-              style={{ transform: `rotate(${mid}deg) translate(10px, -0.5em)`, width: size / 2 - 26 }}
+              className="absolute top-1/2 left-1/2 h-0 origin-left"
+              style={{ transform: `rotate(${mid}deg) translateX(45px)`, width: size / 2 - 55 }}
             >
-              <span className="block text-white font-black text-[10px] uppercase tracking-tight drop-shadow-md truncate">
+              <span className="block -translate-y-1/2 text-white font-black text-[10px] uppercase tracking-tight drop-shadow-md truncate">
                 {s.label}
               </span>
             </div>

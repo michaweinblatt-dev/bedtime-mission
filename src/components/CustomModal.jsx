@@ -21,6 +21,7 @@ export default function CustomModal({ config, unlockAudio, playCameraSound }) {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [flash, setFlash] = useState(false);
   const [streamError, setStreamError] = useState(false);
+  const [streamErrorMessage, setStreamErrorMessage] = useState('');
 
   const viewfinderRef = useRef(null);
   const streamRef = useRef(null);
@@ -45,6 +46,15 @@ export default function CustomModal({ config, unlockAudio, playCameraSound }) {
   }, []);
 
   const startCamera = useCallback(async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setStreamError(true);
+      setStreamErrorMessage(
+        window.isSecureContext
+          ? "Camera isn't supported in this browser — try Upload instead."
+          : 'Camera needs a secure (https) connection — open the live site, or use Upload instead.'
+      );
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
       streamRef.current = stream;
@@ -54,8 +64,18 @@ export default function CustomModal({ config, unlockAudio, playCameraSound }) {
       requestAnimationFrame(() => {
         if (viewfinderRef.current) viewfinderRef.current.srcObject = stream;
       });
-    } catch {
+    } catch (err) {
+      console.error('Camera access failed:', err);
       setStreamError(true);
+      if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') {
+        setStreamErrorMessage('Camera permission was denied — check your browser or site settings and try again.');
+      } else if (err?.name === 'NotFoundError' || err?.name === 'OverconstrainedError') {
+        setStreamErrorMessage('No camera was found on this device — try Upload instead.');
+      } else if (err?.name === 'NotReadableError') {
+        setStreamErrorMessage('The camera is already in use by another app.');
+      } else {
+        setStreamErrorMessage('Camera not available — try Upload instead.');
+      }
     }
   }, []);
 
@@ -180,7 +200,7 @@ export default function CustomModal({ config, unlockAudio, playCameraSound }) {
                   </label>
                 </div>
                 {streamError && (
-                  <p className="text-xs text-red-400 mb-2">Camera not available</p>
+                  <p className="text-xs text-red-400 mb-2 text-center max-w-[220px]">{streamErrorMessage}</p>
                 )}
                 <button
                   onClick={startCamera}
