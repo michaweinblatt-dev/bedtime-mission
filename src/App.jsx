@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { CloudUpload, Palette, User, Plus, Users } from 'lucide-react';
+import { CloudUpload, Palette, User, Plus, Check } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 
-import { STORAGE_KEY, GAME_INDEX_KEY, APP_MODE_KEY, MORNING_GAME_INDEX_KEY, KID_ROSTER_KEY, SPACE_DJ_PLAYLIST, getDefaultTasks, getDefaultMorningTasks, getRewards, getMorningRewards, buildRewardPool, getDefaultAppState, MAIN_SUBTITLES, MORNING_SUBTITLES } from './utils/constants';
+import { STORAGE_KEY, GAME_INDEX_KEY, APP_MODE_KEY, MORNING_GAME_INDEX_KEY, SPACE_DJ_PLAYLIST, getDefaultTasks, getDefaultMorningTasks, getRewards, getMorningRewards, buildRewardPool, getDefaultAppState, MAIN_SUBTITLES, MORNING_SUBTITLES } from './utils/constants';
 import { formatTime, getElapsed } from './utils/helpers';
 import { track } from './utils/analytics';
 import { useAudio } from './hooks/useAudio';
@@ -18,7 +18,6 @@ import StatsModal from './components/StatsModal';
 import CustomModal from './components/CustomModal';
 import InstallPrompt from './components/InstallPrompt';
 import OnboardingOverlay, { ONBOARDING_KEY } from './components/OnboardingOverlay';
-import CrewSheet from './components/CrewSheet';
 import CaptainWheelModal from './components/CaptainWheelModal';
 import GameWheelModal from './components/GameWheelModal';
 
@@ -43,13 +42,16 @@ function loadPersistedState() {
       // Prefer the separate family-wide key (source of truth)
       const familyIdx = localStorage.getItem(GAME_INDEX_KEY);
       if (familyIdx !== null) s.currentGameIndex = parseInt(familyIdx, 10) || 0;
-      // Backfill morningTasks for existing profiles
+      // Backfill morningTasks / includeTonight for existing profiles
       Object.keys(s.profiles || {}).forEach(id => {
         if (!s.profiles[id].morningTasks) {
           s.profiles[id].morningTasks = getDefaultMorningTasks();
         }
         if (s.profiles[id].morningBestTime === undefined) {
           s.profiles[id].morningBestTime = null;
+        }
+        if (s.profiles[id].includeTonight === undefined) {
+          s.profiles[id].includeTonight = true;
         }
       });
       if (s.bedtimeCaptainId === undefined) s.bedtimeCaptainId = null;
@@ -58,14 +60,6 @@ function loadPersistedState() {
     }
   } catch {}
   return getDefaultAppState();
-}
-
-function loadKidRoster() {
-  try {
-    const raw = localStorage.getItem(KID_ROSTER_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return [];
 }
 
 export default function App() {
@@ -92,8 +86,6 @@ export default function App() {
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
 
   // ── Bedtime Captain ──────────────────────────────────────────────────────────
-  const [kidRoster, setKidRosterState] = useState(loadKidRoster);
-  const [showCrewSheet, setShowCrewSheet] = useState(false);
   const [activeCaptainWheel, setActiveCaptainWheel] = useState(null); // 'bedtime' | 'morning' | null
   const [pendingGameWheel, setPendingGameWheel] = useState(null); // { finalState, times, elapsedSeconds, captainType, pool }
 
@@ -116,18 +108,19 @@ export default function App() {
     setAppState(next);
   }, []);
 
-  const setKidRoster = useCallback((next) => {
-    localStorage.setItem(KID_ROSTER_KEY, JSON.stringify(next));
-    setKidRosterState(next);
-  }, []);
-
   const activeProfile = appState.profiles[appState.activeProfileId];
 
-  // ── Captain eligibility (needs >= 2 kids marked "in" tonight) ────────────────
-  const eligibleTonightIds = kidRoster.filter(k => k.includeTonight).map(k => k.id);
-  const captainEligible = eligibleTonightIds.length >= 2;
-  const bedtimeCaptainName = appState.bedtimeCaptainId ? kidRoster.find(k => k.id === appState.bedtimeCaptainId)?.name : null;
-  const morningCaptainName = appState.morningCaptainId ? kidRoster.find(k => k.id === appState.morningCaptainId)?.name : null;
+  // ── Captain eligibility — driven by Astronaut profiles (needs >= 2 marked
+  // "in" tonight). No separate roster: Astronauts are the one kid list. ───────
+  const sibs = Object.keys(appState.profiles).filter(id => id !== 'shared');
+  const captainRoster = sibs.map(id => ({
+    id,
+    name: appState.profiles[id].name,
+    includeTonight: appState.profiles[id].includeTonight !== false,
+  }));
+  const captainEligible = captainRoster.filter(k => k.includeTonight).length >= 2;
+  const bedtimeCaptainName = appState.bedtimeCaptainId ? captainRoster.find(k => k.id === appState.bedtimeCaptainId)?.name : null;
+  const morningCaptainName = appState.morningCaptainId ? captainRoster.find(k => k.id === appState.morningCaptainId)?.name : null;
 
   // ── App mode (Bedtime / Morning) ─────────────────────────────────────────────
   const switchAppMode = useCallback((mode) => {
@@ -423,6 +416,15 @@ export default function App() {
     saveAppState({ ...appState, activeProfileId: id });
   }, [appState, saveAppState]);
 
+  const toggleIncludeTonight = useCallback((id) => {
+    const p = appState.profiles[id];
+    const included = p.includeTonight !== false;
+    saveAppState({
+      ...appState,
+      profiles: { ...appState.profiles, [id]: { ...p, includeTonight: !included } },
+    });
+  }, [appState, saveAppState]);
+
   // ── Audio / DJ ───────────────────────────────────────────────────────────────
   const toggleBeat = useCallback(async () => {
     await unlockAudio();
@@ -516,9 +518,11 @@ export default function App() {
           ...appState,
           profiles: {
             ...appState.profiles,
-            [id]: { name: name.trim(), tasks: getDefaultTasks(), morningTasks: getDefaultMorningTasks(), bestTime: null, morningBestTime: null, missionStartTime: null, missionEndTime: null, lastTaskAt: null, avatar: image || null },
+            [id]: { name: name.trim(), tasks: getDefaultTasks(), morningTasks: getDefaultMorningTasks(), bestTime: null, morningBestTime: null, missionStartTime: null, missionEndTime: null, lastTaskAt: null, avatar: image || null, includeTonight: true },
           },
-          activeProfileId: id,
+          // Together mode always runs the shared checklist — only switch the
+          // active profile when adding from Competition mode.
+          activeProfileId: appState.gameMode === 'team' ? appState.activeProfileId : id,
         };
         saveAppState(next);
         const totalProfiles = Object.keys(next.profiles).filter(k => k !== 'shared').length;
@@ -607,7 +611,6 @@ export default function App() {
 
   // ── Render ────────────────────────────────────────────────────────────────────
   const isTeam = appState.gameMode === 'team';
-  const sibs = Object.keys(appState.profiles).filter(id => id !== 'shared');
 
   return (
     <div
@@ -626,22 +629,13 @@ export default function App() {
             className={`px-4 py-1.5 rounded-full text-xs font-black tracking-wide transition-all ${appMode === 'morning' ? 'bg-amber-500 text-white shadow-lg' : 'text-indigo-300'}`}
           >☀️ Morning</button>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setShowCrewSheet(true)}
-            className="flex items-center gap-2 bg-slate-800/40 hover:bg-indigo-500/30 p-2 rounded-full border border-indigo-500/20 transition-all text-indigo-300"
-            aria-label="Manage crew"
-          >
-            <Users className="w-4 h-4 text-white" />
-          </button>
-          <button
-            onClick={showCloudBackup}
-            className="flex items-center gap-2 bg-slate-800/40 hover:bg-indigo-500/30 px-4 py-2 rounded-full border border-indigo-500/20 transition-all text-xs font-bold text-indigo-300"
-          >
-            <CloudUpload className="w-4 h-4 text-white" />
-            <span className="text-white uppercase tracking-widest">Cloud Backup</span>
-          </button>
-        </div>
+        <button
+          onClick={showCloudBackup}
+          className="flex items-center gap-2 bg-slate-800/40 hover:bg-indigo-500/30 px-4 py-2 rounded-full border border-indigo-500/20 transition-all text-xs font-bold text-indigo-300"
+        >
+          <CloudUpload className="w-4 h-4 text-white" />
+          <span className="text-white uppercase tracking-widest">Cloud Backup</span>
+        </button>
       </div>
 
       {/* Header */}
@@ -661,43 +655,55 @@ export default function App() {
             >Competition</button>
           </div>
 
-          {!isTeam && (
-            <div className="flex gap-3 overflow-x-auto pb-3 custom-scrollbar px-2 w-full text-white font-black">
-              {sibs.map(id => {
-                const p = appState.profiles[id];
-                const isActive = id === appState.activeProfileId;
-                const isRunning = p.missionStartTime && !p.missionEndTime;
-                const isDone = !!p.missionEndTime;
-                return (
-                  <button
-                    key={id}
-                    onClick={() => isActive ? editAstronaut(id) : switchProfile(id)}
-                    className={`px-4 py-2 rounded-[20px] font-extrabold text-sm transition-all border-2 flex-shrink-0 flex flex-col items-center gap-1 ${isActive ? 'bg-indigo-500 text-white border-indigo-400 scale-105 shadow-md' : 'bg-slate-800 text-indigo-300 border-indigo-500/20'}`}
-                  >
-                    <div className="flex items-center gap-2 text-slate-100 font-black text-white">
-                      {p.avatar
-                        ? <div className="astronaut-visor w-6 h-6 border border-white/30"><img src={p.avatar} className="w-full h-full object-cover" /></div>
-                        : <User className="w-4 h-4 text-white" />
-                      }
-                      <span>{p.name}</span>
-                    </div>
-                    {isRunning && (
-                      <span className="text-[10px] font-mono text-pink-400">
-                        {formatTime(getElapsed(p))}
-                      </span>
-                    )}
-                    {isDone && <span className="text-[10px] text-emerald-400 uppercase font-bold">Done</span>}
-                  </button>
-                );
-              })}
-              <button
-                onClick={addSibling}
-                className="px-4 py-3 rounded-[20px] font-bold text-xs bg-pink-500/10 text-pink-400 border-2 border-pink-500/30 flex-shrink-0 border-dashed hover:bg-pink-500/20 transition-all"
-              >
-                + Add Astronaut
-              </button>
-            </div>
-          )}
+          <div className="flex gap-3 overflow-x-auto pb-3 custom-scrollbar px-2 w-full text-white font-black">
+            {sibs.map(id => {
+              const p = appState.profiles[id];
+              const isActive = !isTeam && id === appState.activeProfileId;
+              const isRunning = !isTeam && p.missionStartTime && !p.missionEndTime;
+              const isDone = !isTeam && !!p.missionEndTime;
+              const included = p.includeTonight !== false;
+              return (
+                <button
+                  key={id}
+                  onClick={() => (isTeam || isActive) ? editAstronaut(id) : switchProfile(id)}
+                  className={`relative px-4 py-2 rounded-[20px] font-extrabold text-sm transition-all border-2 flex-shrink-0 flex flex-col items-center gap-1 ${isActive ? 'bg-indigo-500 text-white border-indigo-400 scale-105 shadow-md' : 'bg-slate-800 text-indigo-300 border-indigo-500/20'}`}
+                >
+                  {sibs.length >= 2 && (
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => { e.stopPropagation(); toggleIncludeTonight(id); }}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); toggleIncludeTonight(id); } }}
+                      aria-label={included ? `Exclude ${p.name} tonight` : `Include ${p.name} tonight`}
+                      title={included ? 'In for tonight — tap to skip' : "Skipping tonight — tap to include"}
+                      className={`absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full border-2 flex items-center justify-center ${included ? 'bg-emerald-500 border-emerald-300' : 'bg-slate-700 border-slate-500'}`}
+                    >
+                      {included && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
+                    </span>
+                  )}
+                  <div className="flex items-center gap-2 text-slate-100 font-black text-white">
+                    {p.avatar
+                      ? <div className="astronaut-visor w-6 h-6 border border-white/30"><img src={p.avatar} className="w-full h-full object-cover" /></div>
+                      : <User className="w-4 h-4 text-white" />
+                    }
+                    <span>{p.name}</span>
+                  </div>
+                  {isRunning && (
+                    <span className="text-[10px] font-mono text-pink-400">
+                      {formatTime(getElapsed(p))}
+                    </span>
+                  )}
+                  {isDone && <span className="text-[10px] text-emerald-400 uppercase font-bold">Done</span>}
+                </button>
+              );
+            })}
+            <button
+              onClick={addSibling}
+              className="px-4 py-3 rounded-[20px] font-bold text-xs bg-pink-500/10 text-pink-400 border-2 border-pink-500/30 flex-shrink-0 border-dashed hover:bg-pink-500/20 transition-all"
+            >
+              + Add Astronaut
+            </button>
+          </div>
         </div>
 
         {waitingMessage && (
@@ -859,19 +865,10 @@ export default function App() {
 
       <InstallPrompt />
 
-      {showCrewSheet && (
-        <CrewSheet
-          roster={kidRoster}
-          astronautNames={sibs.map(id => appState.profiles[id].name)}
-          onSave={setKidRoster}
-          onClose={() => setShowCrewSheet(false)}
-        />
-      )}
-
       {activeCaptainWheel && (
         <CaptainWheelModal
           captainType={activeCaptainWheel}
-          roster={kidRoster}
+          roster={captainRoster}
           onClose={() => setActiveCaptainWheel(null)}
           onDone={(captainId) => {
             const field = activeCaptainWheel === 'bedtime' ? 'bedtimeCaptainId' : 'morningCaptainId';

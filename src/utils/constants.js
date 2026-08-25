@@ -3,7 +3,6 @@ export const GAME_INDEX_KEY = 'bedtime_gameIndex';
 export const APP_MODE_KEY = 'bedtime_appMode';
 export const MORNING_GAME_INDEX_KEY = 'bedtime_morningGameIndex';
 
-export const KID_ROSTER_KEY = 'bedtime_kidRoster';
 export const CAPTAIN_BAG_KEYS = {
   bedtime: 'bedtime_captainBag_bedtime',
   morning: 'bedtime_captainBag_morning',
