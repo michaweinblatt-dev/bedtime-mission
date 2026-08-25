@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { X } from 'lucide-react';
 import SpinWheel from './SpinWheel';
 import { useCaptainBag } from '../hooks/useCaptainBag';
@@ -8,11 +8,10 @@ import { track } from '../utils/analytics';
 const TITLES = {
   bedtime: 'Bedtime Captain',
   morning: 'Morning Captain',
-  carride: 'Car Ride Captain',
 };
 
 export default function CaptainWheelModal({ captainType, roster, onDone, onClose }) {
-  const eligible = roster.filter(k => k.includeTonight);
+  const eligible = useMemo(() => roster.filter(k => k.includeTonight), [roster]);
   const { spin } = useCaptainBag(CAPTAIN_BAG_KEYS[captainType]);
   const [targetId, setTargetId] = useState(null);
   const [spinToken, setSpinToken] = useState(0);
@@ -22,7 +21,10 @@ export default function CaptainWheelModal({ captainType, roster, onDone, onClose
     track('captain_wheel_opened', { captain_type: captainType });
   }, [captainType]);
 
-  const segments = eligible.map(k => ({ id: k.id, label: k.name }));
+  // Memoized on `eligible` (itself stable unless the roster changes) so the
+  // SpinWheel's landing-animation effect doesn't get torn down and restarted
+  // by unrelated parent re-renders (e.g. the app's once-a-second timer tick).
+  const segments = useMemo(() => eligible.map(k => ({ id: k.id, label: k.name })), [eligible]);
   const landedName = targetId ? eligible.find(k => k.id === targetId)?.name : null;
 
   const handleSpin = () => {

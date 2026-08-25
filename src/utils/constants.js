@@ -7,7 +7,6 @@ export const KID_ROSTER_KEY = 'bedtime_kidRoster';
 export const CAPTAIN_BAG_KEYS = {
   bedtime: 'bedtime_captainBag_bedtime',
   morning: 'bedtime_captainBag_morning',
-  carride: 'bedtime_captainBag_carride',
 };
 
 export const MAIN_SUBTITLES = [
@@ -115,7 +114,6 @@ export function getDefaultAppState() {
     usageHistory: [],
     bedtimeCaptainId: null,
     morningCaptainId: null,
-    carRideCaptainId: null,
     profiles: {
       shared: {
         name: 'The Crew',

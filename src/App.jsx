@@ -54,7 +54,6 @@ function loadPersistedState() {
       });
       if (s.bedtimeCaptainId === undefined) s.bedtimeCaptainId = null;
       if (s.morningCaptainId === undefined) s.morningCaptainId = null;
-      if (s.carRideCaptainId === undefined) s.carRideCaptainId = null;
       return s;
     }
   } catch {}
@@ -95,7 +94,7 @@ export default function App() {
   // ── Bedtime Captain ──────────────────────────────────────────────────────────
   const [kidRoster, setKidRosterState] = useState(loadKidRoster);
   const [showCrewSheet, setShowCrewSheet] = useState(false);
-  const [activeCaptainWheel, setActiveCaptainWheel] = useState(null); // 'bedtime' | 'morning' | 'carride' | null
+  const [activeCaptainWheel, setActiveCaptainWheel] = useState(null); // 'bedtime' | 'morning' | null
   const [pendingGameWheel, setPendingGameWheel] = useState(null); // { finalState, times, elapsedSeconds, captainType, pool }
 
   const rewardTimerRef = useRef(null);
@@ -129,7 +128,6 @@ export default function App() {
   const captainEligible = eligibleTonightIds.length >= 2;
   const bedtimeCaptainName = appState.bedtimeCaptainId ? kidRoster.find(k => k.id === appState.bedtimeCaptainId)?.name : null;
   const morningCaptainName = appState.morningCaptainId ? kidRoster.find(k => k.id === appState.morningCaptainId)?.name : null;
-  const carRideCaptainName = appState.carRideCaptainId ? kidRoster.find(k => k.id === appState.carRideCaptainId)?.name : null;
 
   // ── App mode (Bedtime / Morning) ─────────────────────────────────────────────
   const switchAppMode = useCallback((mode) => {
@@ -259,9 +257,9 @@ export default function App() {
 
     // If a Captain was picked for tonight/today, the Captain spins the game
     // wheel instead of the reward being auto-assigned — see GameWheelModal.
-    const captainId = isMorning ? stateSnapshot.carRideCaptainId : stateSnapshot.bedtimeCaptainId;
+    const captainId = isMorning ? stateSnapshot.morningCaptainId : stateSnapshot.bedtimeCaptainId;
     if (captainId) {
-      const captainType = isMorning ? 'carride' : 'bedtime';
+      const captainType = isMorning ? 'morning' : 'bedtime';
       setPendingGameWheel({ finalState, times, elapsedSeconds, captainType, pool: buildRewardPool(appMode) });
       return;
     }
@@ -394,7 +392,7 @@ export default function App() {
       localStorage.setItem(GAME_INDEX_KEY, String(nextGameIndex));
     }
     const captainReset = appMode === 'morning'
-      ? { morningCaptainId: null, carRideCaptainId: null }
+      ? { morningCaptainId: null }
       : { bedtimeCaptainId: null };
     const next = {
       ...appState,
@@ -732,19 +730,6 @@ export default function App() {
                 </button>
               )
             )}
-
-            {appMode === 'morning' && (
-              carRideCaptainName ? (
-                <p className="text-emerald-300 font-black text-xs uppercase tracking-wide">🚗 Car Ride Captain: {carRideCaptainName}</p>
-              ) : (
-                <button
-                  onClick={() => setActiveCaptainWheel('carride')}
-                  className="text-xs font-bold text-emerald-300 bg-slate-800/50 hover:bg-slate-800/80 px-4 py-2 rounded-full border border-emerald-400/30 transition-all"
-                >
-                  🚗 Spin the wheel for today's Car Ride Captain
-                </button>
-              )
-            )}
           </div>
         )}
       </div>
@@ -889,9 +874,7 @@ export default function App() {
           roster={kidRoster}
           onClose={() => setActiveCaptainWheel(null)}
           onDone={(captainId) => {
-            const field = activeCaptainWheel === 'bedtime' ? 'bedtimeCaptainId'
-              : activeCaptainWheel === 'morning' ? 'morningCaptainId'
-              : 'carRideCaptainId';
+            const field = activeCaptainWheel === 'bedtime' ? 'bedtimeCaptainId' : 'morningCaptainId';
             saveAppState({ ...appState, [field]: captainId });
             setActiveCaptainWheel(null);
           }}
