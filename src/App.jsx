@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import confetti from 'canvas-confetti';
-import { CloudUpload, Palette, User, Plus } from 'lucide-react';
+import { CloudUpload, Palette, User, Plus, Users } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { SortableContext, arrayMove, rectSortingStrategy } from '@dnd-kit/sortable';
 
-import { STORAGE_KEY, GAME_INDEX_KEY, APP_MODE_KEY, MORNING_GAME_INDEX_KEY, SPACE_DJ_PLAYLIST, getDefaultTasks, getDefaultMorningTasks, getRewards, getMorningRewards, getDefaultAppState, MAIN_SUBTITLES, MORNING_SUBTITLES } from './utils/constants';
+import { STORAGE_KEY, GAME_INDEX_KEY, APP_MODE_KEY, MORNING_GAME_INDEX_KEY, KID_ROSTER_KEY, SPACE_DJ_PLAYLIST, getDefaultTasks, getDefaultMorningTasks, getRewards, getMorningRewards, buildRewardPool, getDefaultAppState, MAIN_SUBTITLES, MORNING_SUBTITLES } from './utils/constants';
 import { formatTime, getElapsed } from './utils/helpers';
 import { track } from './utils/analytics';
 import { useAudio } from './hooks/useAudio';
@@ -18,6 +18,9 @@ import StatsModal from './components/StatsModal';
 import CustomModal from './components/CustomModal';
 import InstallPrompt from './components/InstallPrompt';
 import OnboardingOverlay, { ONBOARDING_KEY } from './components/OnboardingOverlay';
+import CrewSheet from './components/CrewSheet';
+import CaptainWheelModal from './components/CaptainWheelModal';
+import GameWheelModal from './components/GameWheelModal';
 
 function getProfileTasks(profile, appMode) {
   return appMode === 'morning' ? (profile.morningTasks || getDefaultMorningTasks()) : profile.tasks;
@@ -49,10 +52,21 @@ function loadPersistedState() {
           s.profiles[id].morningBestTime = null;
         }
       });
+      if (s.bedtimeCaptainId === undefined) s.bedtimeCaptainId = null;
+      if (s.morningCaptainId === undefined) s.morningCaptainId = null;
+      if (s.carRideCaptainId === undefined) s.carRideCaptainId = null;
       return s;
     }
   } catch {}
   return getDefaultAppState();
+}
+
+function loadKidRoster() {
+  try {
+    const raw = localStorage.getItem(KID_ROSTER_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return [];
 }
 
 export default function App() {
@@ -78,6 +92,12 @@ export default function App() {
   const [compFinishModal, setCompFinishModal] = useState(null); // { name, time, waiting: [] }
   const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY));
 
+  // ── Bedtime Captain ──────────────────────────────────────────────────────────
+  const [kidRoster, setKidRosterState] = useState(loadKidRoster);
+  const [showCrewSheet, setShowCrewSheet] = useState(false);
+  const [activeCaptainWheel, setActiveCaptainWheel] = useState(null); // 'bedtime' | 'morning' | 'carride' | null
+  const [pendingGameWheel, setPendingGameWheel] = useState(null); // { finalState, times, elapsedSeconds, captainType, pool }
+
   const rewardTimerRef = useRef(null);
   const currentAudioRef = useRef(null);
   const startSleepModeRef = useRef(null);
@@ -97,7 +117,19 @@ export default function App() {
     setAppState(next);
   }, []);
 
+  const setKidRoster = useCallback((next) => {
+    localStorage.setItem(KID_ROSTER_KEY, JSON.stringify(next));
+    setKidRosterState(next);
+  }, []);
+
   const activeProfile = appState.profiles[appState.activeProfileId];
+
+  // ── Captain eligibility (needs >= 2 kids marked "in" tonight) ────────────────
+  const eligibleTonightIds = kidRoster.filter(k => k.includeTonight).map(k => k.id);
+  const captainEligible = eligibleTonightIds.length >= 2;
+  const bedtimeCaptainName = appState.bedtimeCaptainId ? kidRoster.find(k => k.id === appState.bedtimeCaptainId)?.name : null;
+  const morningCaptainName = appState.morningCaptainId ? kidRoster.find(k => k.id === appState.morningCaptainId)?.name : null;
+  const carRideCaptainName = appState.carRideCaptainId ? kidRoster.find(k => k.id === appState.carRideCaptainId)?.name : null;
 
   // ── App mode (Bedtime / Morning) ─────────────────────────────────────────────
   const switchAppMode = useCallback((mode) => {
@@ -163,6 +195,23 @@ export default function App() {
     }());
   }, []);
 
+  // ── Finish success (shared tail: after a reward is known, either picked
+  // automatically or via the Captain's game wheel) ─────────────────────────────
+  const finishSuccess = useCallback((finalState, reward, times, elapsedSeconds) => {
+    track('mission_completed', {
+      game_shown: reward.title,
+      elapsed_seconds: Math.round(elapsedSeconds ?? 0),
+      game_mode: finalState.gameMode,
+    });
+    saveAppState(finalState);
+    setFinalTimes(times);
+    setCurrentReward(reward);
+    setShowSuccess(true);
+    playSuccessSound();
+    fireBigConfetti();
+    startRewardTimer(finalState.rewardDuration || 120);
+  }, [saveAppState, playSuccessSound, fireBigConfetti, startRewardTimer]);
+
   // ── Trigger success ───────────────────────────────────────────────────────────
   const triggerSuccess = useCallback((stateSnapshot, isJoint) => {
     const isMorning = appMode === 'morning';
@@ -201,6 +250,23 @@ export default function App() {
       times.push(`${formatTime(elapsed)} ${rec}`);
     }
 
+    const finalState = {
+      ...stateSnapshot,
+      profiles: updatedProfiles,
+      usageHistory: [...(stateSnapshot.usageHistory || []), log],
+    };
+    const elapsedSeconds = log.players[0]?.time ?? 0;
+
+    // If a Captain was picked for tonight/today, the Captain spins the game
+    // wheel instead of the reward being auto-assigned — see GameWheelModal.
+    const captainId = isMorning ? stateSnapshot.carRideCaptainId : stateSnapshot.bedtimeCaptainId;
+    if (captainId) {
+      const captainType = isMorning ? 'carride' : 'bedtime';
+      setPendingGameWheel({ finalState, times, elapsedSeconds, captainType, pool: buildRewardPool(appMode) });
+      return;
+    }
+
+    // No Captain tonight — exactly today's behavior, unchanged.
     const rewards = isMorning ? getMorningRewards() : getRewards();
     const morningIdx = parseInt(localStorage.getItem(MORNING_GAME_INDEX_KEY) || '0', 10) || 0;
     const currentIdx = isMorning
@@ -208,25 +274,8 @@ export default function App() {
       : (stateSnapshot.currentGameIndex ?? 0) % rewards.length;
     const reward = rewards[currentIdx];
 
-    const finalState = {
-      ...stateSnapshot,
-      profiles: updatedProfiles,
-      usageHistory: [...(stateSnapshot.usageHistory || []), log],
-    };
-
-    track('mission_completed', {
-      game_shown: reward.title,
-      elapsed_seconds: Math.round(log.players[0]?.time ?? 0),
-      game_mode: stateSnapshot.gameMode,
-    });
-    saveAppState(finalState);
-    setFinalTimes(times);
-    setCurrentReward(reward);
-    setShowSuccess(true);
-    playSuccessSound();
-    fireBigConfetti();
-    startRewardTimer(finalState.rewardDuration || 120);
-  }, [saveAppState, playSuccessSound, fireBigConfetti, startRewardTimer, appMode]);
+    finishSuccess(finalState, reward, times, elapsedSeconds);
+  }, [appMode, finishSuccess]);
 
   // ── Toggle task ───────────────────────────────────────────────────────────────
   const toggleTask = useCallback(async (taskId) => {
@@ -241,6 +290,10 @@ export default function App() {
     if (!missionStartTime) {
       missionStartTime = Date.now();
       lastTaskAt = missionStartTime;
+      const captainIdForMode = appMode === 'morning' ? appState.morningCaptainId : appState.bedtimeCaptainId;
+      if (captainEligible && !captainIdForMode) {
+        track('captain_skipped', { captain_type: appMode });
+      }
     }
 
     const tasks = prevTasks.map(t => {
@@ -308,7 +361,7 @@ export default function App() {
       setWaitingMessage(null);
       saveAppState(nextState);
     }
-  }, [appState, saveAppState, unlockAudio, playRocketSound, triggerSuccess, appMode]);
+  }, [appState, saveAppState, unlockAudio, playRocketSound, triggerSuccess, appMode, captainEligible]);
 
   // ── Reset ─────────────────────────────────────────────────────────────────────
   const resetMissions = useCallback(() => {
@@ -340,7 +393,15 @@ export default function App() {
       nextGameIndex = ((appState.currentGameIndex ?? 0) + 1) % 10;
       localStorage.setItem(GAME_INDEX_KEY, String(nextGameIndex));
     }
-    const next = { ...appState, profiles, currentGameIndex: appMode === 'morning' ? appState.currentGameIndex : nextGameIndex };
+    const captainReset = appMode === 'morning'
+      ? { morningCaptainId: null, carRideCaptainId: null }
+      : { bedtimeCaptainId: null };
+    const next = {
+      ...appState,
+      profiles,
+      currentGameIndex: appMode === 'morning' ? appState.currentGameIndex : nextGameIndex,
+      ...captainReset,
+    };
     saveAppState(next);
     setShowSleepMode(false);
     setShowSuccess(false);
@@ -419,20 +480,8 @@ export default function App() {
 
   // ── Reward spinning ───────────────────────────────────────────────────────────
   const respinReward = useCallback(() => {
-    let reward;
-    if (appMode === 'morning') {
-      const rewards = getMorningRewards();
-      reward = rewards[Math.floor(Math.random() * rewards.length)];
-    } else {
-      const rewards = getRewards();
-      // All 10 games are available, r3 gets 3x weight
-      const pool = [];
-      for (const r of rewards) {
-        pool.push(r);
-        if (r.id === 'r3') pool.push(r, r);
-      }
-      reward = pool[Math.floor(Math.random() * pool.length)];
-    }
+    const pool = buildRewardPool(appMode);
+    const reward = pool[Math.floor(Math.random() * pool.length)];
     track('game_spun', { game_shown: reward.title });
     setCurrentReward(reward);
     startRewardTimer(appState.rewardDuration || 120);
@@ -579,13 +628,22 @@ export default function App() {
             className={`px-4 py-1.5 rounded-full text-xs font-black tracking-wide transition-all ${appMode === 'morning' ? 'bg-amber-500 text-white shadow-lg' : 'text-indigo-300'}`}
           >☀️ Morning</button>
         </div>
-        <button
-          onClick={showCloudBackup}
-          className="flex items-center gap-2 bg-slate-800/40 hover:bg-indigo-500/30 px-4 py-2 rounded-full border border-indigo-500/20 transition-all text-xs font-bold text-indigo-300"
-        >
-          <CloudUpload className="w-4 h-4 text-white" />
-          <span className="text-white uppercase tracking-widest">Cloud Backup</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowCrewSheet(true)}
+            className="flex items-center gap-2 bg-slate-800/40 hover:bg-indigo-500/30 p-2 rounded-full border border-indigo-500/20 transition-all text-indigo-300"
+            aria-label="Manage crew"
+          >
+            <Users className="w-4 h-4 text-white" />
+          </button>
+          <button
+            onClick={showCloudBackup}
+            className="flex items-center gap-2 bg-slate-800/40 hover:bg-indigo-500/30 px-4 py-2 rounded-full border border-indigo-500/20 transition-all text-xs font-bold text-indigo-300"
+          >
+            <CloudUpload className="w-4 h-4 text-white" />
+            <span className="text-white uppercase tracking-widest">Cloud Backup</span>
+          </button>
+        </div>
       </div>
 
       {/* Header */}
@@ -646,6 +704,48 @@ export default function App() {
 
         {waitingMessage && (
           <p className="text-center text-pink-400 font-bold text-sm mb-2">{waitingMessage}</p>
+        )}
+
+        {/* Bedtime / Morning Captain — optional, hidden unless >= 2 kids are in tonight */}
+        {captainEligible && (
+          <div className="flex flex-col items-center gap-2 mb-4">
+            {appMode === 'morning' ? (
+              morningCaptainName ? (
+                <p className="text-amber-300 font-black text-sm uppercase tracking-wide">👑 Captain: {morningCaptainName}</p>
+              ) : (
+                <button
+                  onClick={() => setActiveCaptainWheel('morning')}
+                  className="text-xs font-bold text-amber-300 bg-slate-800/50 hover:bg-slate-800/80 px-4 py-2 rounded-full border border-amber-400/30 transition-all"
+                >
+                  🎡 Spin the wheel for today's Morning Captain
+                </button>
+              )
+            ) : (
+              bedtimeCaptainName ? (
+                <p className="text-indigo-300 font-black text-sm uppercase tracking-wide">👑 Captain: {bedtimeCaptainName}</p>
+              ) : (
+                <button
+                  onClick={() => setActiveCaptainWheel('bedtime')}
+                  className="text-xs font-bold text-indigo-300 bg-slate-800/50 hover:bg-slate-800/80 px-4 py-2 rounded-full border border-indigo-400/30 transition-all"
+                >
+                  🎡 Spin the wheel for tonight's Bedtime Captain
+                </button>
+              )
+            )}
+
+            {appMode === 'morning' && (
+              carRideCaptainName ? (
+                <p className="text-emerald-300 font-black text-xs uppercase tracking-wide">🚗 Car Ride Captain: {carRideCaptainName}</p>
+              ) : (
+                <button
+                  onClick={() => setActiveCaptainWheel('carride')}
+                  className="text-xs font-bold text-emerald-300 bg-slate-800/50 hover:bg-slate-800/80 px-4 py-2 rounded-full border border-emerald-400/30 transition-all"
+                >
+                  🚗 Spin the wheel for today's Car Ride Captain
+                </button>
+              )
+            )}
+          </div>
         )}
       </div>
 
@@ -773,6 +873,41 @@ export default function App() {
       )}
 
       <InstallPrompt />
+
+      {showCrewSheet && (
+        <CrewSheet
+          roster={kidRoster}
+          astronautNames={sibs.map(id => appState.profiles[id].name)}
+          onSave={setKidRoster}
+          onClose={() => setShowCrewSheet(false)}
+        />
+      )}
+
+      {activeCaptainWheel && (
+        <CaptainWheelModal
+          captainType={activeCaptainWheel}
+          roster={kidRoster}
+          onClose={() => setActiveCaptainWheel(null)}
+          onDone={(captainId) => {
+            const field = activeCaptainWheel === 'bedtime' ? 'bedtimeCaptainId'
+              : activeCaptainWheel === 'morning' ? 'morningCaptainId'
+              : 'carRideCaptainId';
+            saveAppState({ ...appState, [field]: captainId });
+            setActiveCaptainWheel(null);
+          }}
+        />
+      )}
+
+      {pendingGameWheel && (
+        <GameWheelModal
+          captainType={pendingGameWheel.captainType}
+          pool={pendingGameWheel.pool}
+          onDone={(reward) => {
+            finishSuccess(pendingGameWheel.finalState, reward, pendingGameWheel.times, pendingGameWheel.elapsedSeconds);
+            setPendingGameWheel(null);
+          }}
+        />
+      )}
 
       {showOnboarding && (
         <OnboardingOverlay onDismiss={() => {

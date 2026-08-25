@@ -3,6 +3,13 @@ export const GAME_INDEX_KEY = 'bedtime_gameIndex';
 export const APP_MODE_KEY = 'bedtime_appMode';
 export const MORNING_GAME_INDEX_KEY = 'bedtime_morningGameIndex';
 
+export const KID_ROSTER_KEY = 'bedtime_kidRoster';
+export const CAPTAIN_BAG_KEYS = {
+  bedtime: 'bedtime_captainBag_bedtime',
+  morning: 'bedtime_captainBag_morning',
+  carride: 'bedtime_captainBag_carride',
+};
+
 export const MAIN_SUBTITLES = [
   "Complete your missions to unlock tonight's parent challenge.",
   "Finish strong. Tonight's game is worth it.",
@@ -82,6 +89,22 @@ export function getRewards() {
   ];
 }
 
+// Same weighted pool respinReward has always used for bedtime (r3 gets 3x
+// weight), reused by both the manual respin button and the Captain's game
+// wheel so neither changes what games are eligible or how they're gated.
+export function buildRewardPool(appMode) {
+  if (appMode === 'morning') {
+    return getMorningRewards();
+  }
+  const rewards = getRewards();
+  const pool = [];
+  for (const r of rewards) {
+    pool.push(r);
+    if (r.id === 'r3') pool.push(r, r);
+  }
+  return pool;
+}
+
 export function getDefaultAppState() {
   return {
     gameMode: 'team',
@@ -90,6 +113,9 @@ export function getDefaultAppState() {
     currentGameIndex: 0,
     unlockedGames: [],
     usageHistory: [],
+    bedtimeCaptainId: null,
+    morningCaptainId: null,
+    carRideCaptainId: null,
     profiles: {
       shared: {
         name: 'The Crew',
