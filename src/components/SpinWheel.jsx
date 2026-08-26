@@ -83,11 +83,15 @@ export default function SpinWheel({ segments, targetId, spinToken, onSettled, si
       >
         {segments.map((s, i) => {
           const mid = i * segAngle + segAngle / 2;
+          // Unrotated, translateX points along the local +x axis, which is
+          // screen-right (i.e. angle 90° in our "clockwise from top" wedge
+          // convention) — so the rotation needed to aim it at `mid` is
+          // `mid - 90`, not `mid` itself.
           return (
             <div
               key={s.id}
               className="absolute top-1/2 left-1/2 h-0 origin-left"
-              style={{ transform: `rotate(${mid}deg) translateX(45px)`, width: size / 2 - 55 }}
+              style={{ transform: `rotate(${mid - 90}deg) translateX(45px)`, width: size / 2 - 55 }}
             >
               <span className="block -translate-y-1/2 text-white font-black text-[10px] uppercase tracking-tight drop-shadow-md truncate">
                 {s.label}
