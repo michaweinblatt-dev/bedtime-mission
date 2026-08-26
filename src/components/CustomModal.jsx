@@ -60,9 +60,15 @@ export default function CustomModal({ config, unlockAudio, playCameraSound }) {
       streamRef.current = stream;
       setIsCameraOpen(true);
       setStreamError(false);
-      // attach stream to video element after state update
+      // Attach stream to video element after state update. The `autoplay`
+      // attribute alone isn't reliably enough for a stream assigned after
+      // mount — explicitly call play() too, since a silently-rejected
+      // autoplay leaves the element mounted but frozen with no error.
       requestAnimationFrame(() => {
-        if (viewfinderRef.current) viewfinderRef.current.srcObject = stream;
+        const vf = viewfinderRef.current;
+        if (!vf) return;
+        vf.srcObject = stream;
+        vf.play().catch(err => console.error('Camera preview play() failed:', err));
       });
     } catch (err) {
       console.error('Camera access failed:', err);
